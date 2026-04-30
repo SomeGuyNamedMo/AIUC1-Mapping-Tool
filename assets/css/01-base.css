@@ -1,0 +1,84 @@
+:root {
+  --bg:             #100f0c;
+  --surface:        #1a1815;
+  --surface-2:      #211e1a;
+  --surface-3:      #292520;
+  --border:         #2e2a25;
+  --border-bright:  #44403a;
+  --text:           #e8e2d6;
+  --text-dim:       #948b7d;
+  --text-faint:     #5e574d;
+  --coral:          #e8825c;
+  --coral-dim:      rgba(232, 130, 92, 0.14);
+  --amber:          #d4a043;
+  --amber-dim:      rgba(212, 160, 67, 0.14);
+  --sage:           #8ba87a;
+  --sage-dim:       rgba(139, 168, 122, 0.14);
+  --crimson:        #c25450;
+  --crimson-dim:    rgba(194, 84, 80, 0.14);
+  --teal:           #5fa8a1;
+  --teal-dim:       rgba(95, 168, 161, 0.14);
+  --font-display:   'Instrument Serif', 'Times New Roman', Georgia, serif;
+  --font-body:      'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:      'JetBrains Mono', 'SF Mono', Consolas, 'Liberation Mono', monospace;
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  24px;
+  --space-6:  32px;
+  --space-7:  48px;
+  --space-8:  64px;
+  --space-9:  96px;
+  --radius-cell:    2px;
+  --radius-control: 3px;
+  --radius-card:    4px;
+  --radius-frame:   6px;
+  --radius-round:   9999px;
+  --shadow-pop:     0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-lift:    0 16px 32px rgba(0, 0, 0, 0.35);
+  --ease-out-expo:  cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-out-cubic: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast:       150ms;
+  --dur-base:       250ms;
+  --dur-slow:       400ms;
+  --focus-ring:     0 0 0 3px rgba(232, 130, 92, 0.35);
+  --focus-border:   var(--coral);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html { height: 100%; }
+body {
+  margin: 0; padding: 0;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg); color: var(--text);
+  font-family: var(--font-body); font-size: 14px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+  overscroll-behavior: none;
+}
+/* Assessment page locks the viewport so internal panes can scroll. */
+html:has(body[data-page="assessment"]) { overflow: hidden; }
+body[data-page="assessment"] { height: 100%; overflow: hidden; }
+::selection { background: var(--coral); color: var(--bg); }
+a { color: var(--coral); text-decoration: none; }
+a:hover { text-decoration: underline; text-decoration-style: dotted; }
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: none;
+  border-color: var(--focus-border);
+  box-shadow: var(--focus-ring);
+}
+button, [role="button"], [role="switch"], a {
+  touch-action: manipulation;
+}

@@ -1,0 +1,137 @@
+/* ========== chrome ========== */
+.cm-shell {
+  width: min(100%, 1320px);
+  margin: 0 auto;
+  padding-inline: var(--space-6);
+}
+.cm-topbar {
+  flex-shrink: 0;
+  position: relative; z-index: 30;
+  background: rgba(26, 24, 21, 0.97);
+  border-bottom: 1px solid var(--border);
+}
+.cm-topbar-row {
+  display: flex; align-items: center;
+  height: 56px; gap: 18px;
+}
+.cm-brand { display: flex; align-items: baseline; gap: 10px; cursor: pointer; }
+.cm-brand .logo {
+  font-family: var(--font-display); font-style: italic;
+  font-size: 26px; line-height: 1; color: var(--text);
+}
+.cm-brand .logo::after { content: "·"; color: var(--coral); margin-left: 8px; font-style: normal; }
+.cm-brand .product {
+  font-family: var(--font-mono); font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.18em;
+  color: var(--text-dim);
+}
+.cm-pill-env {
+  font-family: var(--font-mono); font-size: 9px;
+  text-transform: uppercase; letter-spacing: 0.16em;
+  color: var(--coral);
+  border: 1px solid var(--coral);
+  border-radius: 2px;
+  padding: 2px 7px;
+  margin-left: 4px;
+}
+.cm-top-actions { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+.cm-top-link {
+  font-family: var(--font-mono); font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.12em;
+  color: var(--text-dim); cursor: pointer;
+  text-decoration: none;
+  border-bottom: 1px dotted var(--border-bright);
+  padding-bottom: 1px;
+  transition: color 150ms, border-bottom-color 150ms;
+}
+.cm-top-link:hover { color: var(--text); border-bottom-color: var(--coral); text-decoration: none; }
+
+/* ========== main app shell ========== */
+#root {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Views toggle between visible and hidden via .cm-hidden */
+#view-form {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+/* Results section — display:none via cm-hidden until JS reveals it */
+#view-results:not(.cm-hidden) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ========== hero ========== */
+/* Landing page: hero fills remaining space and centers its content */
+[data-page="landing"] .cm-hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: var(--space-8);
+}
+/* Assessment page: no hero — form card fills all available space */
+[data-page="assessment"] .cm-hero {
+  display: none;
+}
+.cm-hero {
+  padding-block: var(--space-9) var(--space-8);
+  position: relative;
+}
+.cm-eyebrow {
+  font-family: var(--font-mono); font-size: 11px;
+  font-weight: 400; color: var(--coral);
+  text-transform: uppercase; letter-spacing: 0.20em;
+  margin-bottom: var(--space-5);
+}
+.cm-eyebrow .dot {
+  display: inline-block; width: 5px; height: 5px;
+  border-radius: 50%; background: var(--coral);
+  vertical-align: middle; margin-right: 9px; transform: translateY(-1px);
+}
+.cm-hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(52px, 7vw, 88px); font-weight: 400;
+  line-height: 0.92; letter-spacing: -0.03em;
+  color: var(--text);
+  margin: 0 0 var(--space-5);
+  max-width: 940px;
+}
+.cm-hero h1 em {
+  font-style: italic; color: var(--coral);
+}
+.cm-hero p.lede {
+  font-size: 16px; color: var(--text-dim);
+  line-height: 1.7; max-width: 660px; margin: 0 0 var(--space-6);
+}
+.cm-hero-meta {
+  display: flex; gap: var(--space-5); flex-wrap: wrap;
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--text-faint); text-transform: uppercase;
+  letter-spacing: 0.10em; margin-bottom: var(--space-7);
+}
+.cm-hero-meta .stat .num { color: var(--text); font-weight: 500; }
+.cm-cta-row { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+
+/* ========== form section ========== */
+/* On assessment page the form section fills all remaining height */
+[data-page="assessment"] .cm-form-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-block: 0;
+  padding-inline: 0;
+}

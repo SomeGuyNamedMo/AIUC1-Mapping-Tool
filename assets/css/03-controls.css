@@ -1,0 +1,234 @@
+/* ========== buttons ========== */
+.btn {
+  padding: 10px 18px;
+  min-height: 44px;
+  font-family: var(--font-mono); font-size: 11px;
+  font-weight: 500; letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--border-bright);
+  background: transparent; color: var(--text);
+  cursor: pointer;
+  transition: background var(--dur-fast), border-color var(--dur-fast), color var(--dur-fast), transform 100ms;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  white-space: nowrap;
+  -webkit-user-select: none; user-select: none;
+}
+.btn:hover { background: var(--surface-2); border-color: var(--text-dim); text-decoration: none; }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn.primary { background: var(--coral); border-color: var(--coral); color: var(--bg); }
+.btn.primary:hover { background: #f1916b; border-color: #f1916b; }
+.btn.ghost { border-color: transparent; color: var(--text-dim); }
+.btn.ghost:hover { color: var(--text); background: var(--surface-2); }
+.btn.lg { padding: 14px 24px; font-size: 12px; min-height: 48px; }
+
+/* ========== form ========== */
+.cm-form-section { padding-block: var(--space-5) var(--space-9); }
+.cm-form-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-frame);
+  padding: var(--space-6) var(--space-7);
+}
+/* Full-height form card on the assessment page — fills everything below the topbar */
+[data-page="assessment"] .cm-form-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin: var(--space-4) var(--space-6) var(--space-4);
+  padding: var(--space-5) var(--space-6);
+  border-radius: var(--radius-frame);
+}
+.cm-question { padding: 22px 0; border-bottom: 1px dashed var(--border); }
+.cm-question:last-child { border-bottom: none; padding-bottom: 0; }
+.cm-question .q-head {
+  display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px;
+}
+.cm-question .q-num {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--text-faint); text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+.cm-question .q-label {
+  font-family: var(--font-display); font-style: italic;
+  font-size: 22px; color: var(--text); line-height: 1.25;
+  flex: 1;
+}
+.cm-question .q-required {
+  font-family: var(--font-mono); font-size: 9px;
+  color: var(--coral); text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+.cm-question .q-help {
+  font-size: 13px; color: var(--text-dim);
+  margin: -4px 0 14px; max-width: 640px;
+}
+
+/* ========== inputs ========== */
+.cm-input, .cm-textarea {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-control);
+  color: var(--text);
+  font-family: var(--font-body); font-size: 14px;
+  padding: 11px 14px;
+  outline: none;
+  transition: border-color var(--dur-fast), background var(--dur-fast), box-shadow var(--dur-fast);
+}
+.cm-input:focus, .cm-textarea:focus {
+  border-color: var(--focus-border);
+  background: var(--surface-3);
+  box-shadow: var(--focus-ring);
+}
+.cm-input::placeholder, .cm-textarea::placeholder {
+  color: var(--text-faint);
+}
+.cm-textarea { resize: vertical; min-height: 92px; line-height: 1.55; }
+
+/* segmented */
+.cm-seg {
+  display: inline-flex; padding: 3px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  gap: 0;
+}
+.cm-seg button {
+  padding: 8px 18px; font-size: 12px;
+  font-family: var(--font-mono);
+  font-weight: 500; letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: transparent; border: none; color: var(--text-dim);
+  cursor: pointer; border-radius: 2px;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.cm-seg button:hover { color: var(--text); }
+.cm-seg button.active {
+  background: var(--coral); color: var(--bg); font-weight: 600;
+}
+
+/* chip multi-select */
+.cm-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.cm-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 11px 16px;
+  min-height: 44px;
+  font-family: var(--font-mono); font-size: 11px;
+  letter-spacing: 0.04em; color: var(--text-dim);
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-control); cursor: pointer;
+  transition: border-color var(--dur-fast), color var(--dur-fast), background var(--dur-fast);
+  -webkit-user-select: none; user-select: none;
+}
+.cm-chip:hover { color: var(--text); border-color: var(--border-bright); }
+.cm-chip.on {
+  background: var(--coral-dim); border-color: var(--coral);
+  color: var(--coral);
+}
+.cm-chip .check {
+  display: none;
+  font-family: var(--font-mono); color: var(--coral);
+}
+.cm-chip.on .check { display: inline; }
+/* inferred = auto-selected because of a related audience choice */
+.cm-chip.inferred {
+  border-style: dashed;
+  border-color: var(--coral);
+}
+.cm-chip.inferred::after {
+  content: "auto";
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--coral);
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+/* ========== select ========== */
+.cm-select {
+  appearance: none;
+  width: 100%;
+  background: var(--surface-2)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23948b7d'/%3E%3C/svg%3E")
+    no-repeat right 14px center;
+  border: 1px solid var(--border-bright);
+  border-radius: var(--radius-control);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  padding: 10px 36px 10px 14px;
+  min-height: 44px;
+  cursor: pointer;
+  transition: border-color var(--dur-fast);
+}
+.cm-select:hover { border-color: var(--text-dim); }
+.cm-select:focus { outline: none; border-color: var(--focus-border); box-shadow: var(--focus-ring); }
+.cm-select option, .cm-select optgroup { background: var(--bg); color: var(--text); }
+
+/* ========== model picker ========== */
+.cm-model-picker { display: flex; flex-direction: column; gap: 10px; }
+.cm-model-pills  { display: flex; flex-wrap: wrap; gap: 6px; }
+.cm-model-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 8px 5px 12px;
+  background: var(--coral-dim);
+  border: 1px solid rgba(232, 130, 92, 0.35);
+  border-radius: var(--radius-control);
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--coral); letter-spacing: 0.04em;
+}
+.cm-model-pill-remove {
+  background: none; border: none;
+  color: var(--coral); opacity: 0.55;
+  cursor: pointer; padding: 0 2px;
+  font-size: 15px; line-height: 1;
+  transition: opacity 150ms;
+  min-height: unset;
+}
+.cm-model-pill-remove:hover { opacity: 1; }
+.cm-model-controls {
+  display: flex; gap: 10px; align-items: flex-start;
+  flex-wrap: wrap;
+}
+.cm-model-controls .cm-select { flex: 1; min-width: 200px; }
+.cm-model-other {
+  display: flex; gap: 8px; align-items: center;
+  flex: 1; min-width: 240px;
+}
+.cm-model-other .cm-input { flex: 1; }
+
+/* toggle */
+.cm-toggle {
+  display: inline-flex; align-items: center; gap: 14px;
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--text-dim); text-transform: uppercase;
+  letter-spacing: 0.10em;
+  cursor: pointer; -webkit-user-select: none; user-select: none;
+  background: transparent; border: none; padding: 0;
+  min-height: 44px;
+}
+.cm-toggle .track {
+  width: 44px; height: 26px; border-radius: var(--radius-round);
+  background: var(--surface-2); border: 1px solid var(--border);
+  position: relative; transition: background 150ms, border-color 150ms;
+  flex-shrink: 0;
+}
+.cm-toggle .track::after {
+  content: ""; position: absolute; top: 3px; left: 3px;
+  width: 18px; height: 18px; border-radius: var(--radius-round);
+  background: var(--text-dim);
+  transition: left 200ms var(--ease-spring), background 200ms;
+}
+.cm-toggle.on .track {
+  background: var(--coral-dim); border-color: var(--coral);
+}
+.cm-toggle.on .track::after {
+  left: 21px; background: var(--coral);
+}
+.cm-toggle.on { color: var(--text); }

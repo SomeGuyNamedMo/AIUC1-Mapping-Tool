@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content" />
+<title>Assess Your App · Framework Mapper</title>
+<meta name="description" content="Take the guesswork out of framework mapping for AI." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=optional" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/main.css" />
+</head>
+<body data-page="assessment">
+
+<header class="cm-topbar">
+  <div class="cm-shell cm-topbar-row">
+    <div class="cm-brand" id="brand">
+      <span class="logo">aiuc</span>
+      <span class="product">Crosswalk</span>
+      <span class="cm-pill-env">v1</span>
+    </div>
+    <div class="cm-top-actions">
+      <a class="cm-top-link" href="index.html">Overview</a>
+      <a class="cm-top-link" href="https://www.aiuc-1.com/crosswalks" target="_blank" rel="noopener">Mapping reference ↗</a>
+    </div>
+  </div>
+</header>
+
+<main id="root">
+  <section id="view-form">
+    <div class="cm-shell cm-hero">
+      <div class="cm-eyebrow"><span class="dot"></span>Framework Mapping Assessment</div>
+      <h1>Assess <em>your app.</em></h1>
+      <p class="lede">
+        Answer three short steps to map your AI app, use case, or agent.
+      </p>
+    </div>
+
+    <div class="cm-shell cm-form-section" id="questionnaire">
+      <form id="cm-form-card" class="cm-form-card">
+        <div class="cm-stepper" id="cm-stepper">
+          <div class="cm-step active" data-step="1">
+            <div class="num">1</div>
+            <div class="lbl"><div class="k">Step 01</div><div class="t">Application</div></div>
+            <div class="joiner"></div>
+          </div>
+          <div class="cm-step" data-step="2">
+            <div class="num">2</div>
+            <div class="lbl"><div class="k">Step 02</div><div class="t">Modalities</div></div>
+            <div class="joiner"></div>
+          </div>
+          <div class="cm-step" data-step="3">
+            <div class="num">3</div>
+            <div class="lbl"><div class="k">Step 03</div><div class="t">Reach &amp; data</div></div>
+          </div>
+        </div>
+
+        <div id="cm-step-1" class="cm-step-pane active"></div>
+        <div id="cm-step-2" class="cm-step-pane"></div>
+        <div id="cm-step-3" class="cm-step-pane"></div>
+
+        <div class="cm-wizard-footer">
+          <span class="reassure" id="cm-reassure">Runs entirely in your browser. Nothing is sent or stored.</span>
+          <button class="btn" type="button" id="btn-back">← Back</button>
+          <button class="btn primary lg" type="button" id="btn-next">Next →</button>
+          <button class="btn primary lg cm-hidden" type="button" id="cm-submit">See my coverage →</button>
+          <button class="btn ghost" type="button" id="btn-reset">Reset</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section id="view-results" class="cm-hidden">
+    <div class="cm-shell cm-results-section">
+      <div class="cm-results-header">
+        <div class="lhs">
+          <div class="cm-result-eyebrow" id="cm-result-eyebrow"></div>
+          <h1 class="cm-result-title" id="cm-result-title"></h1>
+          <p class="cm-result-sub" id="cm-result-sub"></p>
+        </div>
+        <button class="cm-back-btn" type="button" id="btn-restart">← Try another app</button>
+      </div>
+
+      <nav class="cm-tabs" id="cm-tabs" role="tablist" aria-label="Results sections">
+        <button class="cm-tab active" type="button" role="tab" id="tab-coverage" aria-selected="true" tabindex="0" data-tab="coverage"><span class="num">01</span>Coverage</button>
+        <button class="cm-tab" type="button" role="tab" id="tab-requirements" aria-selected="false" tabindex="-1" data-tab="requirements"><span class="num">02</span>Requirements</button>
+        <button class="cm-tab" type="button" role="tab" id="tab-crosswalks" aria-selected="false" tabindex="-1" data-tab="crosswalks"><span class="num">03</span>Crosswalks</button>
+      </nav>
+
+      <div class="cm-pane active" role="tabpanel" aria-labelledby="tab-coverage" data-pane="coverage">
+        <div class="cm-scorecard">
+          <div class="cm-scorecard-main">
+            <div class="cm-scorecard-stat" id="cm-stat-num"></div>
+            <div class="cm-scorecard-stat-label">Framework requirements in scope</div>
+            <div class="cm-scorecard-bar" id="cm-stat-bar"></div>
+            <div class="cm-scorecard-legend" id="cm-stat-legend"></div>
+          </div>
+          <div class="cm-scorecard-side">
+            <div class="cm-scorecard-side-head">Why these activated</div>
+            <div class="cm-scorecard-bigbreakdown" id="cm-stat-breakdown"></div>
+          </div>
+        </div>
+
+        <div class="cm-section">
+          <div class="cm-section-head">
+            <div>
+              <div class="cm-section-eyebrow">Crosswalk matrix</div>
+              <h2 class="cm-section-title">Mappings across 17 frameworks, by Principle</h2>
+            </div>
+            <div class="cm-section-meta" id="cm-matrix-meta"></div>
+          </div>
+          <div class="cm-matrix" id="cm-matrix"></div>
+        </div>
+      </div>
+
+      <div class="cm-pane" role="tabpanel" aria-labelledby="tab-requirements" data-pane="requirements">
+        <div class="cm-req-controls" id="cm-req-controls"></div>
+        <div class="cm-req-list" id="cm-requirements"></div>
+      </div>
+
+      <div class="cm-pane" role="tabpanel" aria-labelledby="tab-crosswalks" data-pane="crosswalks">
+        <div class="cm-glossary-controls" id="cm-gloss-controls"></div>
+        <div class="cm-glossary" id="cm-glossary"></div>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<div class="cm-mx-modal-backdrop" id="cm-mx-modal-backdrop"></div>
+<div class="cm-mx-modal" id="cm-mx-modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="cm-mx-modal-content" id="cm-mx-modal-content"></div>
+</div>
+
+<footer class="cm-footer">
+  <div class="cm-shell cm-footer-row">
+    <div class="cm-footer-lhs">
+      <span class="cm-footer-eyebrow">About this tool</span>
+      <span class="cm-footer-tagline">Interactive framework mapping for agentic AI use cases · <b>49</b> reqs · <b>130</b> sub-controls · <b>17</b> linked frameworks</span>
+    </div>
+    <div class="cm-footer-rhs">
+      <a href="https://www.aiuc-1.com" target="_blank" rel="noopener">Framework docs ↗</a>
+      <a href="https://www.aiuc-1.com/crosswalks" target="_blank" rel="noopener">Browse mappings ↗</a>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/01-dom.js" defer></script>
+<script src="assets/js/02-data.js" defer></script>
+<script src="assets/js/02a-data-requirements.js" defer></script>
+<script src="assets/js/02b-data-crosswalks.js" defer></script>
+<script src="assets/js/02c-data-recommendations.js" defer></script>
+<script src="assets/js/02d-data-models.js" defer></script>
+<script src="assets/js/02e-data-content.js" defer></script>
+<script src="assets/js/03-state.js" defer></script>
+<script src="assets/js/04-engine.js" defer></script>
+<script src="assets/js/05-form.js" defer></script>
+<script src="assets/js/06-tabs.js" defer></script>
+<script src="assets/js/07-results.js" defer></script>
+<script src="assets/js/09-requirements.js" defer></script>
+<script src="assets/js/08-boot.js" defer></script>
+
+</body>
+</html>

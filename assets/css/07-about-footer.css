@@ -1,0 +1,106 @@
+/* About AIUC-1 card */
+.cm-about-card {
+  margin-top: 36px;
+  background: var(--surface);
+  border-left: 3px solid var(--coral);
+  border-top: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius-frame);
+  padding: 36px 40px;
+  display: grid; grid-template-columns: 1.4fr 1fr;
+  gap: 36px; align-items: center;
+}
+.cm-about-eyebrow {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--coral); text-transform: uppercase;
+  letter-spacing: 0.20em; margin-bottom: 12px;
+}
+.cm-about-card h3 {
+  font-family: var(--font-display);
+  font-size: 32px; line-height: 1; letter-spacing: -0.02em;
+  margin: 0 0 14px; color: var(--text);
+  max-width: 560px;
+}
+.cm-about-card h3 em { font-style: italic; color: var(--coral); }
+.cm-about-card p {
+  font-size: 13px; color: var(--text-dim);
+  line-height: 1.6; max-width: 560px; margin: 0 0 18px;
+}
+.cm-about-stats {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 14px; padding-top: 14px;
+  border-top: 1px dashed var(--border);
+}
+.cm-about-stat .num {
+  font-family: var(--font-mono); font-size: 22px;
+  font-weight: 300; line-height: 1;
+  letter-spacing: -0.02em; color: var(--text);
+}
+.cm-about-stat .lbl {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--text-faint); text-transform: uppercase;
+  letter-spacing: 0.12em; margin-top: 4px;
+}
+.cm-about-actions {
+  display: flex; flex-direction: column; gap: 10px;
+  align-items: stretch;
+}
+.cm-about-actions .btn { justify-content: center; }
+.cm-about-meta {
+  font-family: var(--font-mono); font-size: 9px;
+  color: var(--text-faint); text-transform: uppercase;
+  letter-spacing: 0.14em; text-align: center;
+  margin-top: 4px;
+}
+
+/* persistent slim footer — pinned to viewport bottom on assessment page,
+   appears under content on landing. Holds the AIUC-1 brand line + actions. */
+.cm-footer {
+  flex-shrink: 0;
+  background: rgba(26, 24, 21, 0.97);
+  border-top: 1px solid var(--border);
+  padding: 12px 0;
+}
+.cm-footer-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 24px; flex-wrap: wrap;
+}
+.cm-footer-lhs {
+  display: flex; align-items: baseline; gap: 12px;
+  flex: 1; min-width: 280px; flex-wrap: wrap;
+}
+.cm-footer-eyebrow {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--coral); text-transform: uppercase;
+  letter-spacing: 0.20em;
+  flex-shrink: 0;
+}
+.cm-footer-tagline {
+  font-size: 11px; color: var(--text-dim);
+  line-height: 1.5;
+}
+.cm-footer-tagline b {
+  color: var(--text); font-family: var(--font-mono);
+  font-weight: 500;
+}
+.cm-footer-rhs {
+  display: flex; gap: 16px; flex-wrap: wrap;
+  font-family: var(--font-mono); font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.10em;
+}
+.cm-footer-rhs a {
+  color: var(--text-dim);
+  border-bottom: 1px dotted transparent;
+  padding-bottom: 1px;
+  transition: color 150ms, border-bottom-color 150ms;
+}
+.cm-footer-rhs a:hover {
+  color: var(--coral);
+  border-bottom-color: var(--coral);
+  text-decoration: none;
+}
+@media (max-width: 880px) {
+  .cm-footer-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .cm-footer-rhs { width: 100%; }
+}

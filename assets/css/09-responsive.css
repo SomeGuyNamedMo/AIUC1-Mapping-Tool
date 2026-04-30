@@ -1,0 +1,192 @@
+/* ========== results tab nav ========== */
+.cm-tabs {
+  position: static; /* no page scroll — no need for sticky */
+  z-index: auto;
+  display: flex; gap: 0;
+  background: rgba(26, 24, 21, 0.97);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  /* keep negative margin trick for edge-to-edge look within cm-shell */
+  margin: 0 calc(-1 * var(--space-6)) 0;
+  padding: 0 var(--space-6);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.cm-tabs::-webkit-scrollbar { display: none; }
+.cm-tab {
+  position: relative;
+  font-family: var(--font-mono); font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.10em;
+  padding: 14px 18px;
+  min-height: 44px;
+  background: transparent; border: none;
+  color: var(--text-faint); cursor: pointer;
+  white-space: nowrap;
+  transition: color 200ms;
+}
+.cm-tab .num {
+  font-size: 9px; color: var(--text-faint);
+  letter-spacing: 0.16em; margin-right: 6px;
+  transition: color 200ms;
+}
+.cm-tab:hover { color: var(--text-dim); }
+.cm-tab:hover .num { color: var(--text-faint); }
+.cm-tab.active { color: var(--text); }
+.cm-tab.active .num { color: var(--coral); }
+.cm-tab.active::after {
+  content: ""; position: absolute;
+  bottom: -1px; left: 12px; right: 12px;
+  height: 2px; background: var(--coral);
+  animation: tabUnderline 350ms var(--ease-out-expo);
+}
+@keyframes tabUnderline {
+  from { transform: scaleX(0); transform-origin: left; }
+  to   { transform: scaleX(1); }
+}
+
+/* Tab panes: flex: 1 fills remaining height; scroll internally */
+.cm-pane { display: none; }
+.cm-pane.active {
+  display: block;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-block: var(--space-5) var(--space-8);
+  animation: paneIn 320ms var(--ease-out-expo);
+}
+@keyframes paneIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cm-results-header {
+  margin-bottom: 8px;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 18px; flex-wrap: wrap;
+}
+.cm-results-header .lhs { min-width: 0; }
+.cm-back-btn {
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--text-dim); text-transform: uppercase;
+  letter-spacing: 0.10em;
+  background: transparent; border: 1px solid var(--border);
+  padding: 10px 14px; min-height: 44px; border-radius: var(--radius-control);
+  cursor: pointer; transition: background 150ms, border-color 150ms, color 150ms;
+  white-space: nowrap;
+}
+.cm-back-btn:hover { border-color: var(--text-dim); color: var(--text); background: var(--surface-2); }
+
+/* ========== animation utilities ========== */
+.cm-hidden { display: none !important; }
+.fade-in { animation: fadeIn 400ms var(--ease-out-expo); }
+.stagger-1 { animation-delay: 60ms; animation-fill-mode: backwards; }
+.stagger-2 { animation-delay: 120ms; animation-fill-mode: backwards; }
+.stagger-3 { animation-delay: 180ms; animation-fill-mode: backwards; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.cm-scorecard-stat { animation: countUp 500ms var(--ease-out-expo); }
+
+.cm-cell { animation: cellPop 240ms var(--ease-spring) backwards; }
+@keyframes cellPop {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ========== narrow viewport (≤880px) ========== */
+@media (max-width: 880px) {
+  .cm-shell { padding-inline: var(--space-4); }
+  [data-page="landing"] .cm-hero { padding-block: var(--space-6); }
+  .cm-hero h1 { font-size: clamp(40px, 12vw, 64px); }
+  .cm-result-title { font-size: 28px; }
+  [data-page="assessment"] .cm-form-card {
+    margin: var(--space-3) var(--space-4) var(--space-3);
+    padding: var(--space-4) var(--space-4);
+  }
+  .cm-step-grid { grid-template-columns: 1fr; gap: 18px; }
+  .cm-stepper { flex-wrap: wrap; gap: 8px; padding: 12px 0 16px; }
+  .cm-step .joiner { display: none; }
+  .cm-step { flex: none; min-width: 0; }
+  .cm-step .lbl .t { font-size: 13px; }
+  .cm-step:not(.active) .lbl .t,
+  .cm-step:not(.active) .lbl .k { display: none; }
+  .cm-map-checkboxes { max-height: none; }
+  .cm-tabs { margin: 0 calc(-1 * var(--space-4)) 0; padding: 0 var(--space-4); }
+  .cm-tab { padding: 12px 14px; font-size: 10px; }
+  .cm-scorecard { grid-template-columns: 1fr; }
+  .cm-scorecard-side { border-left: none; border-top: 1px solid var(--border); }
+  .cm-heatmap-row { grid-template-columns: 110px 1fr 58px; gap: 12px; }
+  .cm-heatmap-family .name { font-size: 14px; }
+  .cm-cell { width: 26px; height: 26px; font-size: 8px; }
+  .cm-detail-row { grid-template-columns: 1fr; gap: 6px; }
+  .cm-detail-cw { grid-template-columns: 1fr auto auto; gap: 6px; }
+  .cm-cw-head { grid-template-columns: 1fr; gap: 8px; padding: 14px 16px; }
+  .cm-cw-density, .cm-cw-action { text-align: left; }
+  .cm-about-card { grid-template-columns: 1fr; padding: 28px 24px; gap: 24px; }
+  .cm-wizard-footer { gap: 8px; }
+  .cm-wizard-footer .reassure { min-width: 100%; order: 3; }
+}
+
+/* ========== short viewports (landscape tablet / small laptop) ========== */
+@media (max-height: 680px) {
+  [data-page="assessment"] .cm-form-card {
+    padding: var(--space-4) var(--space-5);
+  }
+  .cm-stepper { padding: 10px 0 12px; margin-bottom: 14px; }
+  .cm-step-head .ti { font-size: 22px; }
+  .cm-scorecard-stat { font-size: 40px; }
+  .cm-result-title { font-size: 24px; }
+  .cm-results-header { margin-bottom: 4px; }
+}
+
+/* ========== touch-specific enhancements ========== */
+@media (pointer: coarse) {
+  /* Bigger stepper hit areas */
+  .cm-step { padding: 4px 0; }
+  /* Glossary rows need more vertical space */
+  .cm-gloss-row { padding: 18px; }
+  /* Chip gaps for fat fingers */
+  .cm-chips { gap: 10px; }
+}
+
+/* Audit fixes: detail flash, glossary focus, OOS cells, tab pill, glossary empty, footer transition */
+@keyframes detailFlash {
+  from { opacity: 0.3; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.cm-detail.flash { animation: detailFlash 240ms var(--ease-out-expo); }
+.cm-matrix-row .cell { font-size: 11px; }
+.cm-matrix-row .cell.zero {
+  cursor: default;
+  pointer-events: none;
+}
+.cm-gloss-empty {
+  background: var(--surface);
+  border: 1px dashed var(--border-bright);
+  border-radius: var(--radius-card);
+  padding: 32px 24px;
+  text-align: center;
+  display: flex; flex-direction: column; gap: 12px; align-items: center;
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--text-dim); letter-spacing: 0.06em;
+}
+.cm-wizard-footer .btn { transition: opacity 150ms; }
+#btn-reset { margin-left: 4px; }
+
+/* prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
