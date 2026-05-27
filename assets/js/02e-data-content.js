@@ -9,38 +9,6 @@
    prose to actually orient a reader.
    ============================================================ */
 
-const PRINCIPLE_DESCRIPTIONS = {
-  A: "Protect the data flowing through the system. AIUC-1 covers input-data policies, output ownership, customer-data scoping, IP and trade-secret leakage, PII handling, and consent for training. Universal mandatories live here — every application carries some Principle A controls regardless of modality.",
-  B: "Defend the model against adversarial use. Covers prompt injection, jailbreaks, endpoint scraping, deployment-environment hardening, rate limits, and tool-call authorization. Activations scale with capability — agentic tool use and external-facing endpoints add controls here.",
-  C: "Prevent the model from causing harm through what it outputs. A continuous risk-management spine: pre-deployment testing, harmful-output filtering, out-of-scope blocking, third-party evaluations, and live monitoring. The largest principle by control count and the most reshaped by modality choice.",
-  D: "Hold the model accountable to ground truth. Covers hallucination detection, tool-call grounding, accuracy assertions in customer-facing claims, and feedback loops on misbehavior. Smaller in count but high-severity — agentic deployments touch every Principle D control.",
-  E: "Make humans answerable for the AI system's behavior. The largest principle by requirement count: incident response, named owners, supplier due diligence, audit logging, regulatory tracking, acceptable-use policies, and disclosure mechanisms. External-facing systems and regulated jurisdictions add the most controls here.",
-  F: "Prevent the system from enabling harm at societal scale. Two requirements: cyber-misuse defenses (F001) and CBRN-misuse defenses (F002). Triggered by external-facing posture and the nature of model capabilities — most internal applications will see zero F controls in scope.",
-};
-
-const SEVERITY_CRITERIA = {
-  high: "Cross-customer, PII, CBRN, or agent-action controls. Treat as mandatory blocking findings.",
-  medium: "Mandatory policy and documentation controls. Required but typically lower implementation cost.",
-  low: "Supplemental controls. Lift the maturity ceiling but don't gate baseline conformance.",
-};
-
-const RELATIONSHIP_SEMANTICS = {
-  addresses:
-    "The AIUC-1 control directly satisfies the framework's requirement. Implementing the AIUC-1 control should produce evidence usable for the target framework.",
-  partially_addresses:
-    "The AIUC-1 control covers part of the framework requirement. Supplemental controls or framework-specific evidence may be needed to fully satisfy the target.",
-  mitigates:
-    "The AIUC-1 control reduces the risk underlying the requirement without fully satisfying its language.",
-  tests_for:
-    "The AIUC-1 control includes test or evaluation activity that validates the framework requirement.",
-};
-
-const CONFIDENCE_LABELS = {
-  high: "Direct mapping. AIUC-1 publishes the connection or the framework text aligns one-to-one.",
-  medium: "Partial coverage or scope gap noted; some interpretation required.",
-  low: "Indirect or weak mapping. Review the AIUC-1 control before claiming reliance on this connection.",
-};
-
 /* Short labels for relationship pills — replaces underscored slugs in UI */
 const RELATIONSHIP_LABELS = {
   addresses: "addresses",

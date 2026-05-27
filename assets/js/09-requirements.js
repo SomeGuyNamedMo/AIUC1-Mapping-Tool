@@ -665,56 +665,6 @@
     _dirty = false;
   }
 
-  // ---- cross-tab entry point -----------------------------------------
-  // Called by other tabs (e.g. Coverage) to jump straight to a requirement.
-  // Switches to the Requirements tab, ensures the table is rendered, clears
-  // any filters that would hide the slug, opens its detail and scrolls to it.
-  function openRequirement(slug) {
-    if (!slug || !REQUIREMENTS_DETAIL || !REQUIREMENTS_DETAIL[slug]) return;
-
-    // (a) Switch the results view to the Requirements tab. Mirror what
-    // clicking [data-tab="requirements"] does (06-tabs.js switchTab).
-    if (typeof switchTab === "function") {
-      switchTab("requirements");
-    } else {
-      const tabBtn = document.querySelector('.cm-tab[data-tab="requirements"]');
-      if (tabBtn) tabBtn.click();
-    }
-
-    // (b) Ensure the table is rendered.
-    renderRequirements(true);
-
-    // (c) Clear any active filters / search that would hide this slug, so
-    // the row is guaranteed visible.
-    const activated = activatedSet();
-    const m = buildRowModel(activated).find(r => r.slug === slug);
-    if (m) {
-      if (!rowMatchesFilters(m)) {
-        _filterScope = "all";
-        _filterApp = "all";
-        _filterPrinciple = "all";
-        _filterSeverity = "all";
-        _query = "";
-        renderControls();
-      }
-    }
-
-    // (d) Open the detail and scroll the row into view. Reuse the existing
-    // internals rather than duplicating selection logic.
-    _selectedSlug = null;       // force selectRequirement to treat as new
-    renderTable();              // rebuild with cleared filters + selection reset
-    selectRequirement(slug);
-
-    setTimeout(() => {
-      const row = document.querySelector(
-        `#cm-requirements .cm-req-tr[data-req-slug="${slug}"]`
-      );
-      if (row && typeof row.scrollIntoView === "function") {
-        row.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-    }, 0);
-  }
-
   // ---- wiring ---------------------------------------------------------
   function init() {
     // Re-render every time the requirements tab is activated.
@@ -756,7 +706,4 @@
     init();
   }
 
-  // expose
-  window.renderRequirements = renderRequirements;
-  window.openRequirement = openRequirement;
 })();

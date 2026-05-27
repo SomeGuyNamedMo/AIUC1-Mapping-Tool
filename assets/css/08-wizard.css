@@ -137,57 +137,21 @@
   border-bottom: none;
 }
 
-/* region checkboxes (replaces the old world-map picker) */
-.cm-region-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 2px 16px;
-  align-items: start;
-  max-width: 560px;
-  margin-top: 4px;
-}
-/* US umbrella + indented state/city sub-jurisdictions */
+/* region picker — chips (reuses .cm-chips/.cm-chip) with the US state/city
+   sub-jurisdictions revealed only when US is selected. */
+.cm-region { margin-top: 4px; }
 .cm-region-subs {
-  display: flex; flex-direction: column;
-  margin-left: 12px; padding-left: 10px;
+  display: none;
+  margin-top: 14px; padding-left: 12px;
   border-left: 1px dashed var(--border);
 }
-.cm-checkbox {
-  display: flex; align-items: center; gap: 10px;
-  padding: 6px 4px; cursor: pointer; user-select: none;
-  border-radius: 2px;
-  transition: background 150ms;
+.cm-region-subs.show { display: block; }
+.cm-region-subs-label {
+  display: block;
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--text-faint); text-transform: uppercase;
+  letter-spacing: 0.12em; margin-bottom: 8px;
 }
-.cm-checkbox:hover { background: var(--surface-2); }
-.cm-checkbox .box {
-  width: 14px; height: 14px;
-  border: 1px solid var(--border-bright);
-  border-radius: 2px;
-  background: var(--surface-2);
-  position: relative; flex-shrink: 0;
-  transition: background 200ms, border-color 200ms;
-}
-.cm-checkbox .box::after {
-  content: ""; position: absolute;
-  top: 1px; left: 4px; width: 4px; height: 8px;
-  border-right: 2px solid var(--bg);
-  border-bottom: 2px solid var(--bg);
-  transform: rotate(45deg) scale(0);
-  transition: transform 200ms var(--ease-spring);
-}
-.cm-checkbox.on .box {
-  background: var(--coral); border-color: var(--coral);
-}
-.cm-checkbox.on .box::after { transform: rotate(45deg) scale(1); }
-.cm-checkbox .lbl {
-  font-family: var(--font-mono); font-size: 11px;
-  color: var(--text-dim); letter-spacing: 0.04em;
-  transition: color 200ms;
-}
-.cm-checkbox.on .lbl { color: var(--text); }
-.cm-checkbox.sub { padding-left: 16px; }
-.cm-checkbox.sub .lbl { font-size: 10px; color: var(--text-faint); }
-.cm-checkbox.sub.on .lbl { color: var(--text-dim); }
 
 /* ========== form footer ========== */
 .cm-wizard-footer {
@@ -200,10 +164,5 @@
   font-family: var(--font-mono); font-size: 10px;
   color: var(--text-faint); letter-spacing: 0.04em;
   flex: 1; min-width: 200px;
-}
-
-/* Enlarge region checkboxes for touch */
-.cm-checkbox {
-  padding: 10px 6px; min-height: 44px;
 }
 
