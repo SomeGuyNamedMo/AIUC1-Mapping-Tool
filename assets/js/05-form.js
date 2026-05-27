@@ -253,49 +253,45 @@ function jumpToStep(target) {
    ============================================================ */
 
 const MAP_REGIONS = [
-  { id: "EU",        x: 510, y: 175, label: "EU",        labelOffset: 22 },
-  { id: "UK",        x: 470, y: 155, label: "UK",        labelOffset: -19 },
-  { id: "US",        x: 215, y: 220, label: "US",        labelOffset: -19 },
-  { id: "Canada",    x: 220, y: 145, label: "Canada",    labelOffset: -19 },
-  { id: "Brazil",    x: 350, y: 360, label: "Brazil",    labelOffset: -19 },
-  { id: "India",     x: 670, y: 290, label: "India",     labelOffset: -19 },
-  { id: "Japan",     x: 815, y: 230, label: "Japan",     labelOffset: -19 },
-  { id: "Singapore", x: 745, y: 340, label: "Singapore", labelOffset: -19 },
+  { id: "EU",        label: "EU" },
+  { id: "UK",        label: "UK" },
+  { id: "US",        label: "US" },
+  { id: "Canada",    label: "Canada" },
+  { id: "Brazil",    label: "Brazil" },
+  { id: "India",     label: "India" },
+  { id: "Japan",     label: "Japan" },
+  { id: "Singapore", label: "Singapore" },
 ];
 
-// 338 subpaths, 58657 bytes
-
 function buildRegionPicker() {
-  const grid = el("div", { class: "cm-region-grid" });
-  MAP_REGIONS.forEach(r => {
-    if (r.id === "US") {
-      // US umbrella + the state/city jurisdictions that drive specific rules
-      const subs = el("div", { class: "cm-region-subs" },
-        US_SUB_JURISDICTIONS.map(subId =>
-          buildCheckbox(subId, US_SUB_LABELS[subId] || subId, true)));
-      grid.appendChild(el("div", { class: "cm-region-group" }, [
-        buildCheckbox(r.id, r.label),
-        subs,
-      ]));
-    } else {
-      grid.appendChild(buildCheckbox(r.id, r.label));
-    }
-  });
-  return grid;
+  const wrap = el("div", { class: "cm-region" });
+
+  // top-level regions as chips (consistent with the other multi-select steps)
+  const chips = el("div", { class: "cm-chips cm-region-chips" });
+  MAP_REGIONS.forEach(r => chips.appendChild(buildJurChip(r.id, r.label)));
+  wrap.appendChild(chips);
+
+  // US state/city jurisdictions — revealed only when US is selected
+  const subs = el("div", { class: "cm-region-subs" }, [
+    el("span", { class: "cm-region-subs-label", text: "United States — narrow to:" }),
+    el("div", { class: "cm-chips" },
+      US_SUB_JURISDICTIONS.map(id => buildJurChip(id, US_SUB_LABELS[id] || id))),
+  ]);
+  wrap.appendChild(subs);
+
+  return wrap;
 }
 
-function buildCheckbox(id, label, sub) {
-  const wrap = el("label", {
-    class: "cm-checkbox" + (sub ? " sub" : "") + (state.jurisdictions.includes(id) ? " on" : ""),
+function buildJurChip(id, label) {
+  const chip = el("span", {
+    class: "cm-chip" + (state.jurisdictions.includes(id) ? " on" : ""),
     data: { jurisdiction: id },
-  });
-  wrap.appendChild(el("span", { class: "box" }));
-  wrap.appendChild(el("span", { class: "lbl", text: label }));
-  wrap.addEventListener("click", e => {
-    e.preventDefault();
-    toggleJurisdiction(id);
-  });
-  return wrap;
+  }, [
+    el("span", { text: label }),
+    el("span", { class: "check", text: "✓" }),
+  ]);
+  chip.addEventListener("click", () => toggleJurisdiction(id));
+  return chip;
 }
 
 const US_SUB_JURISDICTIONS = ["US-California", "US-Colorado", "US-NYC"];
@@ -328,9 +324,12 @@ function toggleJurisdiction(id) {
 }
 
 function syncJurisdictionUI() {
-  document.querySelectorAll(".cm-checkbox[data-jurisdiction]").forEach(c => {
+  document.querySelectorAll(".cm-region [data-jurisdiction]").forEach(c => {
     c.classList.toggle("on", state.jurisdictions.includes(c.dataset.jurisdiction));
   });
+  // reveal US sub-jurisdictions only when the US umbrella is selected
+  const subs = document.querySelector(".cm-region-subs");
+  if (subs) subs.classList.toggle("show", state.jurisdictions.includes("US"));
 }
 
 function buildQuestion(num, label, help, requiredTag, control) {
@@ -555,9 +554,6 @@ function clearPersistedState() {
 }
 
 function resetForm() {
-  // Dismiss the detail drawer in case it was open over the form
-  if (typeof closeDetailDrawer === "function") closeDetailDrawer();
-
   Object.assign(state, {
     appName: "", description: "", facing: null,
     inputModalities: [], outputModalities: [], automation: false,

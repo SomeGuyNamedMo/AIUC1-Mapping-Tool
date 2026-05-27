@@ -4,30 +4,6 @@
    RESULTS
    ============================================================ */
 
-// ---- detail drawer (module-level so always defined, even before first renderResults) ----
-function openDetailDrawer() {
-  document.getElementById("cm-detail").classList.add("open");
-  document.getElementById("cm-detail-backdrop").classList.add("open");
-}
-function closeDetailDrawer() {
-  const detail = document.getElementById("cm-detail");
-  const backdrop = document.getElementById("cm-detail-backdrop");
-  if (detail) detail.classList.remove("open");
-  if (backdrop) backdrop.classList.remove("open");
-  document.querySelectorAll(".cm-matrix-row .cell.selected").forEach(c => c.classList.remove("selected"));
-}
-
-// Attach once at script load (defer scripts run after DOM is fully parsed)
-{
-  const backdrop = document.getElementById("cm-detail-backdrop");
-  if (backdrop) backdrop.addEventListener("click", closeDetailDrawer);
-}
-document.addEventListener("keydown", e => {
-  if (e.key === "Escape" && document.getElementById("cm-detail")?.classList.contains("open")) {
-    closeDetailDrawer();
-  }
-});
-
 // ---- centered matrix/requirement modal (shared #cm-mx-modal) ----
 // Module-level so both the framework (matrix) modal and the requirement modal
 // open/close the SAME element interchangeably. close() just toggles classes,
@@ -249,16 +225,14 @@ function cmOpenRequirementModal(slug) {
 }
 
 function renderResults() {
-  const { reasons, buckets } = deriveActivations(state);
+  const { reasons } = deriveActivations(state);
   const activated = Object.keys(reasons);
   const activatedSet = new Set(activated);
   const recs = recommendedSlugs(state);
   const triggeredSlugs = new Set(recs.map(r => r.slug));
   const triggerReason = Object.fromEntries(recs.map(r => [r.slug, r.why]));
 
-  const total = Object.keys(REQUIREMENTS).length;
-  const num = activated.length;
-  const appLabel = state.appName.trim() || "Your application";
+  const appLabel = state.appName.trim() || "your application";
 
   // ============= results header =============
   const eyebrow = document.getElementById("cm-result-eyebrow");
@@ -266,15 +240,13 @@ function renderResults() {
     el("span", { style: { display: "inline-block", width: "5px", height: "5px",
       borderRadius: "50%", background: "var(--coral)", verticalAlign: "middle",
       marginRight: "9px", transform: "translateY(-1px)" } }),
-    "Framework scope · ",
-    el("span", { style: { color: "var(--text)" }, text: appLabel }),
+    "Framework scope",
   );
 
   const title = document.getElementById("cm-result-title");
   mount(title,
-    document.createTextNode(num + " "),
-    el("em", { text: "of " + total }),
-    document.createTextNode(" Requirements activated."),
+    document.createTextNode("Coverage for "),
+    el("em", { text: appLabel }),
   );
 
   const triggerCount = recs.length;
@@ -289,58 +261,6 @@ function renderResults() {
   } else {
     sub.textContent = "This mapping covers 17 frameworks. Browse them by tab.";
   }
-
-  // ============= scorecard =============
-  const statNum = document.getElementById("cm-stat-num");
-  mount(statNum, String(num), el("span", { class: "of", text: " / " + total }));
-
-  const totalActivated = num || 1;
-  const segs = [
-    { label: "Universal",       count: buckets.universal  || 0, color: "var(--text-dim)"  },
-    { label: "Modality-driven", count: buckets.modality   || 0, color: "var(--coral)"     },
-    { label: "Automation",      count: buckets.automation || 0, color: "var(--amber)"     },
-    { label: "External-facing", count: buckets.external   || 0, color: "var(--teal)"      },
-  ];
-  const bar = document.getElementById("cm-stat-bar");
-  clear(bar);
-  segs.forEach(s => {
-    if (!s.count) return;
-    bar.appendChild(el("div", { style: {
-      width: ((s.count / totalActivated) * 100) + "%",
-      background: s.color,
-    }}));
-  });
-
-  const legend = document.getElementById("cm-stat-legend");
-  clear(legend);
-  segs.forEach(s => {
-    legend.appendChild(el("span", { class: "item" }, [
-      el("span", { class: "sw", style: { background: s.color } }),
-      document.createTextNode(s.label + " "),
-      el("span", { style: { color: "var(--text)", marginLeft: "6px" }, text: String(s.count) }),
-    ]));
-  });
-
-  const modalityList = [...new Set([...state.inputModalities, ...state.outputModalities])].join(" + ") || "your modalities";
-  const lines = [
-    { n: buckets.universal || 0, label: "Universal mandatories", suffix: " — baseline controls every application carries", tag: "ALWAYS" },
-    { n: buckets.modality  || 0, label: "Modality-driven",       suffix: " — activated by " + modalityList, tag: "DERIVATION" },
-  ];
-  if (buckets.automation) lines.push({ n: buckets.automation, label: "Automation", suffix: " — tool calls / agentic actions", tag: "DERIVATION" });
-  if (buckets.external)   lines.push({ n: buckets.external,   label: "External-facing", suffix: " — A007 (IP-violation exposure)", tag: "DERIVATION" });
-
-  const breakdown = document.getElementById("cm-stat-breakdown");
-  clear(breakdown);
-  lines.forEach(row => {
-    breakdown.appendChild(el("div", { class: "cm-bd-row" }, [
-      el("div", { class: "n" + (row.n === 0 ? " zero" : ""), text: String(row.n) }),
-      el("div", { class: "l" }, [
-        el("b", { text: row.label }),
-        document.createTextNode(row.suffix),
-      ]),
-      el("div", { class: "tag", text: row.tag }),
-    ]));
-  });
 
   // ============= executive summary (risk) =============
   renderRiskSummary(activatedSet);

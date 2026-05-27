@@ -495,5 +495,4 @@
     init();
   }
 
-  window.renderChecklist = renderChecklist;
 })();

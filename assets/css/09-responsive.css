@@ -81,26 +81,6 @@
 
 /* ========== animation utilities ========== */
 .cm-hidden { display: none !important; }
-.fade-in { animation: fadeIn 400ms var(--ease-out-expo); }
-.stagger-1 { animation-delay: 60ms; animation-fill-mode: backwards; }
-.stagger-2 { animation-delay: 120ms; animation-fill-mode: backwards; }
-.stagger-3 { animation-delay: 180ms; animation-fill-mode: backwards; }
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes countUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.cm-scorecard-stat { animation: countUp 500ms var(--ease-out-expo); }
-
-.cm-cell { animation: cellPop 240ms var(--ease-spring) backwards; }
-@keyframes cellPop {
-  from { opacity: 0; transform: scale(0.6); }
-  to   { opacity: 1; transform: scale(1); }
-}
-
 /* ========== narrow viewport (≤880px) ========== */
 @media (max-width: 880px) {
   .cm-shell { padding-inline: var(--space-4); }
@@ -120,16 +100,7 @@
   .cm-step:not(.active) .lbl .k { display: none; }
   .cm-tabs { margin: 0 calc(-1 * var(--space-4)) 0; padding: 0 var(--space-4); }
   .cm-tab { padding: 12px 14px; font-size: 10px; }
-  .cm-scorecard { grid-template-columns: 1fr; }
-  .cm-scorecard-side { border-left: none; border-top: 1px solid var(--border); }
-  .cm-heatmap-row { grid-template-columns: 110px 1fr 58px; gap: 12px; }
-  .cm-heatmap-family .name { font-size: 14px; }
-  .cm-cell { width: 26px; height: 26px; font-size: 8px; }
-  .cm-detail-row { grid-template-columns: 1fr; gap: 6px; }
   .cm-detail-cw { grid-template-columns: 1fr auto auto; gap: 6px; }
-  .cm-cw-head { grid-template-columns: 1fr; gap: 8px; padding: 14px 16px; }
-  .cm-cw-density, .cm-cw-action { text-align: left; }
-  .cm-about-card { grid-template-columns: 1fr; padding: 28px 24px; gap: 24px; }
   .cm-wizard-footer { gap: 8px; }
   .cm-wizard-footer .reassure { min-width: 100%; order: 3; }
 }
@@ -141,7 +112,6 @@
   }
   .cm-stepper { padding: 10px 0 12px; margin-bottom: 14px; }
   .cm-step-head .ti { font-size: 22px; }
-  .cm-scorecard-stat { font-size: 40px; }
   .cm-result-title { font-size: 24px; }
   .cm-results-header { margin-bottom: 4px; }
 }
@@ -156,26 +126,11 @@
   .cm-chips { gap: 10px; }
 }
 
-/* Audit fixes: detail flash, glossary focus, OOS cells, tab pill, glossary empty, footer transition */
-@keyframes detailFlash {
-  from { opacity: 0.3; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.cm-detail.flash { animation: detailFlash 240ms var(--ease-out-expo); }
+/* Audit fixes: glossary focus, OOS cells, tab pill, footer transition */
 .cm-matrix-row .cell { font-size: 11px; }
 .cm-matrix-row .cell.zero {
   cursor: default;
   pointer-events: none;
-}
-.cm-gloss-empty {
-  background: var(--surface);
-  border: 1px dashed var(--border-bright);
-  border-radius: var(--radius-card);
-  padding: 32px 24px;
-  text-align: center;
-  display: flex; flex-direction: column; gap: 12px; align-items: center;
-  font-family: var(--font-mono); font-size: 11px;
-  color: var(--text-dim); letter-spacing: 0.06em;
 }
 .cm-wizard-footer .btn { transition: opacity 150ms; }
 #btn-reset { margin-left: 4px; }
