@@ -2,19 +2,31 @@
 
 /* ============================================================
    REQUIREMENTS TAB
-   Renders the full AIUC-1 requirement catalog grouped by
-   Principle, with a right-side detail drawer mirroring the
-   matrix drawer aesthetic.
+   A clean, report-style master-detail view:
+   - left: a sortable / searchable / filterable TABLE of the 49
+     requirements (one row each — no unbounded accordions).
+   - right: a single persistent detail panel showing the selected
+     requirement's description, status, sub-controls and crosswalk
+     refs. Only one requirement is ever expanded at a time.
+   On narrow screens the detail panel collapses into a slide-in
+   drawer so the table stays fully usable.
    ============================================================ */
 
 (function () {
   // ---- module state ---------------------------------------------------
   let _rendered = false;
   let _dirty = true;
-  let _filterScope = "all";   // "all" | "in-scope" | "out-of-scope"
-  let _filterApp = "all";     // "all" | "core" | "supplemental"
+  let _filterScope = "all";     // "all" | "in-scope" | "out-of-scope"
+  let _filterApp = "all";       // "all" | "core" | "supplemental"
+  let _filterPrinciple = "all"; // "all" | "A" | "B" | ...
+  let _filterSeverity = "all";  // "all" | "critical" | "high" | "medium" | "low"
   let _query = "";
   let _selectedSlug = null;
+  let _sortKey = "id";        // id | principle | scope | type | severity | subs | refs
+  let _sortDir = 1;           // 1 asc, -1 desc
+
+  // critical > high > medium > low. (Data has no "low", but kept for safety.)
+  const SEV_RANK = { critical: 4, high: 3, medium: 2, low: 1, "": 0, null: 0 };
 
   // ---- helpers --------------------------------------------------------
   function activatedSet() {
@@ -24,6 +36,11 @@
 
   function principleOf(slug) {
     return (slug || "").charAt(0);
+  }
+
+  function principleName(code) {
+    const p = (PRINCIPLES || []).find(x => x.code === code);
+    return p ? p.name : code;
   }
 
   function frequencyLabel(f) {
@@ -39,10 +56,18 @@
     return String(rel || "").replace(/_/g, " ");
   }
 
+  function severityForRow(detail) {
+    const subs = detail.sub_controls || [];
+    if (subs.some(s => s.severity === "critical")) return "critical";
+    if (subs.some(s => s.severity === "high")) return "high";
+    if (subs.some(s => s.severity === "medium")) return "medium";
+    if (subs.some(s => s.severity === "low")) return "low";
+    return null;
+  }
+
   // ---- mappings filter -----------------------------------------------
-  // For a given requirement id (e.g. "B005"), produce a map keyed by
-  // crosswalk slug containing { meta, mappings: [...] } where mappings
-  // are the entries whose `source` matches the requirement id.
+  // For a given requirement id (e.g. "B005"), produce groups keyed by
+  // crosswalk slug, each containing the entries whose `source` matches.
   function mappingsForRequirement(reqId) {
     const out = [];
     if (typeof CROSSWALK_DETAILS !== "object" || !CROSSWALK_DETAILS) return out;
@@ -62,6 +87,17 @@
     return out;
   }
 
+  function refCountForRequirement(reqId) {
+    let n = 0;
+    if (typeof CROSSWALK_DETAILS !== "object" || !CROSSWALK_DETAILS) return 0;
+    Object.keys(CROSSWALK_DETAILS).forEach(slug => {
+      const cw = CROSSWALK_DETAILS[slug];
+      if (!cw || !Array.isArray(cw.mappings)) return;
+      n += cw.mappings.filter(m => m.source === reqId).length;
+    });
+    return n;
+  }
+
   // ---- controls bar ---------------------------------------------------
   function renderControls() {
     const root = document.getElementById("cm-req-controls");
@@ -78,20 +114,33 @@
         value: _query,
         oninput: (e) => {
           _query = (e.target.value || "").toLowerCase().trim();
-          renderList();
+          renderTable();
         },
       }),
     ]);
 
+    function currentFor(group) {
+      switch (group) {
+        case "scope":     return _filterScope;
+        case "app":       return _filterApp;
+        case "principle": return _filterPrinciple;
+        case "severity":  return _filterSeverity;
+        default:          return "all";
+      }
+    }
+
     function chip(label, key, group) {
-      const isActive = (group === "scope" ? _filterScope : _filterApp) === key;
+      const isActive = currentFor(group) === key;
       return el("button", {
         type: "button",
         class: "cm-req-chip" + (isActive ? " active" : ""),
         onclick: () => {
-          if (group === "scope") _filterScope = key; else _filterApp = key;
+          if (group === "scope") _filterScope = key;
+          else if (group === "app") _filterApp = key;
+          else if (group === "principle") _filterPrinciple = key;
+          else if (group === "severity") _filterSeverity = key;
           renderControls();
-          renderList();
+          renderTable();
         },
       }, [label]);
     }
@@ -108,232 +157,366 @@
       chip("Supplemental", "supplemental", "app"),
     ]);
 
+    const principleChips = [chip("All P.", "all", "principle")];
+    (PRINCIPLES || []).forEach(p => {
+      principleChips.push(chip(p.code, p.code, "principle"));
+    });
+    const principleFilter = el("div", { class: "cm-req-filter" }, principleChips);
+
+    // Only severity levels that exist in the data (no "low").
+    const severityFilter = el("div", { class: "cm-req-filter" }, [
+      chip("All Sev.", "all", "severity"),
+      chip("Critical", "critical", "severity"),
+      chip("High", "high", "severity"),
+      chip("Medium", "medium", "severity"),
+    ]);
+
     const meta = el("div", { class: "cm-req-meta", id: "cm-req-meta" }, [
       String(total) + " requirements",
     ]);
 
-    mount(root, search, scopeFilter, appFilter, meta);
+    mount(root, search, scopeFilter, appFilter, principleFilter, severityFilter, meta);
   }
 
-  // ---- main list ------------------------------------------------------
-  function rowMatchesFilters(slug, detail, activated) {
-    if (_filterScope === "in-scope" && !activated.has(slug)) return false;
-    if (_filterScope === "out-of-scope" && activated.has(slug)) return false;
+  // ---- row model + filtering -----------------------------------------
+  function buildRowModel(activated) {
+    const slugs = Object.keys(REQUIREMENTS_DETAIL || {});
+    return slugs.map(slug => {
+      const detail = REQUIREMENTS_DETAIL[slug] || {};
+      return {
+        slug,
+        detail,
+        title: REQUIREMENTS[slug] || slug,
+        principle: principleOf(slug),
+        inScope: activated.has(slug),
+        mandatory: !!detail.mandatory,
+        severity: severityForRow(detail),
+        subs: (detail.sub_controls || []).length,
+        refs: refCountForRequirement(slug),
+      };
+    });
+  }
+
+  function rowMatchesFilters(m) {
+    if (_filterScope === "in-scope" && !m.inScope) return false;
+    if (_filterScope === "out-of-scope" && m.inScope) return false;
     if (_filterApp !== "all") {
-      const apps = (detail.sub_controls || []).map(s => s.application);
+      const apps = (m.detail.sub_controls || []).map(s => s.application);
       if (!apps.includes(_filterApp)) return false;
     }
+    if (_filterPrinciple !== "all" && m.principle !== _filterPrinciple) return false;
+    // Filter on the exact rolled-up value the Severity column displays.
+    if (_filterSeverity !== "all" && m.severity !== _filterSeverity) return false;
     if (_query) {
       const hay = (
-        slug + " " +
-        (REQUIREMENTS[slug] || "") + " " +
-        (detail.description || "") + " " +
-        (detail.sub_controls || []).map(s => (s.title || "") + " " + (s.guidance || "")).join(" ")
+        m.slug + " " +
+        m.title + " " +
+        (m.detail.description || "") + " " +
+        (m.detail.sub_controls || [])
+          .map(s => (s.title || "") + " " + (s.guidance || "")).join(" ")
       ).toLowerCase();
       if (!hay.includes(_query)) return false;
     }
     return true;
   }
 
-  function severityForRow(detail) {
-    const subs = detail.sub_controls || [];
-    if (subs.some(s => s.severity === "high")) return "high";
-    if (subs.some(s => s.severity === "medium")) return "medium";
-    if (subs.some(s => s.severity === "low")) return "low";
-    return null;
+  function sortRows(rows) {
+    const dir = _sortDir;
+    rows.sort((a, b) => {
+      let r = 0;
+      switch (_sortKey) {
+        case "principle":
+          r = a.principle.localeCompare(b.principle) || a.slug.localeCompare(b.slug);
+          break;
+        case "scope":
+          r = (a.inScope === b.inScope) ? 0 : (a.inScope ? -1 : 1);
+          if (r === 0) r = a.slug.localeCompare(b.slug);
+          break;
+        case "type":
+          r = (a.mandatory === b.mandatory) ? 0 : (a.mandatory ? -1 : 1);
+          if (r === 0) r = a.slug.localeCompare(b.slug);
+          break;
+        case "severity":
+          r = SEV_RANK[b.severity] - SEV_RANK[a.severity];
+          if (r === 0) r = a.slug.localeCompare(b.slug);
+          break;
+        case "subs":
+          r = b.subs - a.subs;
+          if (r === 0) r = a.slug.localeCompare(b.slug);
+          break;
+        case "refs":
+          r = b.refs - a.refs;
+          if (r === 0) r = a.slug.localeCompare(b.slug);
+          break;
+        case "id":
+        default:
+          r = a.slug.localeCompare(b.slug);
+          break;
+      }
+      return r * dir;
+    });
+    return rows;
   }
 
-  function buildRow(slug, detail, activated) {
-    const isActive = activated.has(slug);
-    const sev = severityForRow(detail);
+  // ---- the table ------------------------------------------------------
+  const COLUMNS = [
+    { key: "id",        label: "Requirement", cls: "col-req" },
+    { key: "principle", label: "Principle",   cls: "col-prin" },
+    { key: "scope",     label: "In scope",    cls: "col-scope" },
+    { key: "type",      label: "Type",        cls: "col-type" },
+    { key: "severity",  label: "Severity",    cls: "col-sev" },
+    { key: "subs",      label: "Subs",        cls: "col-num col-subs" },
+    { key: "refs",      label: "Refs",        cls: "col-num col-refs" },
+  ];
 
-    const code = el("span", { class: "cm-req-code", text: slug });
-
-    const titleWrap = el("div", { class: "cm-req-title-wrap" }, [
-      el("span", { class: "cm-req-title", text: REQUIREMENTS[slug] || slug }),
-      el("span", { class: "cm-req-sub-meta",
-        text: (detail.sub_controls || []).length + " sub-control"
-          + ((detail.sub_controls || []).length === 1 ? "" : "s")
-          + " · " + frequencyLabel(detail.frequency) }),
-    ]);
-
-    const pills = el("div", { class: "cm-req-pills" });
-    if (detail.mandatory) {
-      pills.appendChild(el("span", { class: "cm-req-pill mandatory", text: "Mandatory" }));
+  function setSort(key) {
+    if (_sortKey === key) {
+      _sortDir = -_sortDir;
     } else {
-      pills.appendChild(el("span", { class: "cm-req-pill optional", text: "Optional" }));
+      _sortKey = key;
+      _sortDir = 1;
     }
-    if (sev) {
-      pills.appendChild(el("span", { class: "cm-req-pill sev sev-" + sev, text: sev }));
-    }
+    renderTable();
+  }
 
-    const dot = el("span", {
-      class: "cm-req-dot" + (isActive ? " on" : ""),
-      title: isActive ? "In scope" : "Out of scope",
+  function buildHeader() {
+    const head = el("div", { class: "cm-req-thead", role: "row" });
+    COLUMNS.forEach(c => {
+      const isSorted = _sortKey === c.key;
+      const arrow = isSorted ? (_sortDir === 1 ? "▲" : "▼") : "";
+      const cell = el("button", {
+        type: "button",
+        class: "cm-req-th " + c.cls + (isSorted ? " sorted" : ""),
+        role: "columnheader",
+        "aria-sort": isSorted ? (_sortDir === 1 ? "ascending" : "descending") : "none",
+        onclick: () => setSort(c.key),
+      }, [
+        el("span", { class: "th-label", text: c.label }),
+        el("span", { class: "th-arrow", text: arrow }),
+      ]);
+      head.appendChild(cell);
     });
+    return head;
+  }
 
-    const arrow = el("span", { class: "cm-req-arrow", text: "›" });
+  function buildBodyRow(m) {
+    const cells = [];
 
-    const row = el("div", {
-      class: "cm-req-row" + (isActive ? " triggered" : "") + (_selectedSlug === slug ? " selected" : ""),
-      role: "button",
+    // Requirement: id chip + title
+    cells.push(el("div", { class: "cm-req-td col-req" }, [
+      el("span", { class: "cm-req-code", text: m.slug }),
+      el("div", { class: "cm-req-title-wrap" }, [
+        el("span", { class: "cm-req-title", text: m.title }),
+      ]),
+    ]));
+
+    // Principle: code + short name
+    cells.push(el("div", { class: "cm-req-td col-prin" }, [
+      el("span", { class: "cm-req-prin-code", text: m.principle }),
+      el("span", { class: "cm-req-prin-name", text: principleName(m.principle) }),
+    ]));
+
+    // In scope: dot + word
+    cells.push(el("div", { class: "cm-req-td col-scope" }, [
+      el("span", {
+        class: "cm-req-dot" + (m.inScope ? " on" : ""),
+        title: m.inScope ? "In scope" : "Out of scope",
+      }),
+      el("span", { class: "cm-req-scope-label", text: m.inScope ? "Yes" : "No" }),
+    ]));
+
+    // Type
+    cells.push(el("div", { class: "cm-req-td col-type" }, [
+      el("span", {
+        class: "cm-req-pill " + (m.mandatory ? "mandatory" : "optional"),
+        text: m.mandatory ? "Mandatory" : "Optional",
+      }),
+    ]));
+
+    // Severity
+    cells.push(el("div", { class: "cm-req-td col-sev" }, [
+      m.severity
+        ? el("span", { class: "cm-req-pill sev-" + m.severity, text: m.severity })
+        : el("span", { class: "cm-req-dash", text: "—" }),
+    ]));
+
+    // Subs count
+    cells.push(el("div", { class: "cm-req-td col-num col-subs", text: String(m.subs) }));
+
+    // Refs count
+    cells.push(el("div", { class: "cm-req-td col-num col-refs" }, [
+      m.refs
+        ? el("span", { text: String(m.refs) })
+        : el("span", { class: "cm-req-dash", text: "—" }),
+    ]));
+
+    return el("div", {
+      class: "cm-req-tr"
+        + (m.inScope ? " triggered" : "")
+        + (_selectedSlug === m.slug ? " selected" : ""),
+      role: "row",
       tabindex: "0",
-      data: { reqSlug: slug },
-      onclick: () => openDetail(slug),
+      data: { reqSlug: m.slug },
+      onclick: () => selectRequirement(m.slug),
       onkeydown: (e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
-          openDetail(slug);
+          selectRequirement(m.slug);
         }
       },
-    }, [code, titleWrap, pills, dot, arrow]);
-
-    return row;
+    }, cells);
   }
 
-  function renderList() {
+  function renderTable() {
     const root = document.getElementById("cm-requirements");
     if (!root) return;
     clear(root);
 
     const activated = activatedSet();
-    const groups = {};
-    PRINCIPLES.forEach(p => { groups[p.code] = []; });
+    const all = buildRowModel(activated);
+    const total = all.length;
 
-    const slugs = Object.keys(REQUIREMENTS_DETAIL || {}).sort();
-    let visible = 0;
-
-    slugs.forEach(slug => {
-      const detail = REQUIREMENTS_DETAIL[slug];
-      if (!detail) return;
-      if (!rowMatchesFilters(slug, detail, activated)) return;
-      const code = principleOf(slug);
-      if (!groups[code]) groups[code] = [];
-      groups[code].push({ slug, detail });
-      visible++;
-    });
+    let rows = all.filter(rowMatchesFilters);
+    sortRows(rows);
+    const visible = rows.length;
 
     const meta = document.getElementById("cm-req-meta");
     if (meta) {
-      const total = Object.keys(REQUIREMENTS_DETAIL || {}).length;
       meta.textContent = (visible === total)
         ? (total + " requirements")
         : (visible + " / " + total + " requirements");
     }
 
+    // Layout: a 2-col master-detail. The table is one column; the detail
+    // panel is the other (and becomes a drawer on narrow screens via CSS).
+    const layout = el("div", { class: "cm-req-layout" });
+
+    const tableWrap = el("div", { class: "cm-req-table-wrap" });
+    const table = el("div", { class: "cm-req-table", role: "table" });
+    table.appendChild(buildHeader());
+
+    const body = el("div", { class: "cm-req-tbody", role: "rowgroup" });
     if (visible === 0) {
-      root.appendChild(el("div", { class: "cm-req-empty",
+      body.appendChild(el("div", { class: "cm-req-empty",
         text: "No requirements match the current filters." }));
-      return;
+      // selection no longer valid in this filtered view
+    } else {
+      rows.forEach(m => body.appendChild(buildBodyRow(m)));
     }
+    table.appendChild(body);
+    tableWrap.appendChild(table);
+    layout.appendChild(tableWrap);
 
-    PRINCIPLES.forEach(p => {
-      const items = groups[p.code] || [];
-      if (!items.length) return;
+    // detail panel container (filled by renderDetail)
+    const panel = el("div", { class: "cm-req-detail", id: "cm-req-detail" });
+    layout.appendChild(panel);
 
-      const head = el("div", { class: "cm-req-group-head" }, [
-        el("span", { class: "cm-req-group-code", text: p.code }),
-        el("span", { class: "cm-req-group-name", text: p.name }),
-        el("span", { class: "cm-req-group-count", text: items.length + " req" + (items.length === 1 ? "" : "s") }),
-      ]);
-      root.appendChild(head);
-
-      const list = el("div", { class: "cm-req-group-list" });
-      items.forEach(({ slug, detail }) => {
-        list.appendChild(buildRow(slug, detail, activated));
-        list.appendChild(el("div", { class: "cm-req-expansion", data: { reqSlug: slug } }));
-      });
-      root.appendChild(list);
+    // backdrop for the narrow-screen drawer mode
+    const backdrop = el("div", {
+      class: "cm-req-detail-backdrop",
+      id: "cm-req-detail-backdrop",
+      onclick: () => closeDetail(),
     });
+    layout.appendChild(backdrop);
+
+    root.appendChild(layout);
+
+    // Re-render detail for the still-selected slug (if it survived filtering),
+    // otherwise show the placeholder.
+    if (_selectedSlug && rows.some(r => r.slug === _selectedSlug)) {
+      renderDetail(_selectedSlug, activated);
+    } else {
+      _selectedSlug = null;
+      renderPlaceholder();
+    }
   }
 
-  // ---- inline expansion ----------------------------------------------
-  // Each row has a paired .cm-req-expansion sibling (added by renderList).
-  // Click a row → render full detail into that row's expansion and toggle
-  // open. Click the same row again → collapse. Multiple rows may stay
-  // open simultaneously for cross-requirement comparison.
+  // ---- detail panel ---------------------------------------------------
+  function renderPlaceholder() {
+    const panel = document.getElementById("cm-req-detail");
+    if (!panel) return;
+    panel.classList.remove("open", "has-selection", "oos");
+    clear(panel);
+    panel.appendChild(el("div", { class: "cm-req-detail-empty" }, [
+      el("div", { class: "cm-req-detail-empty-mark", text: "⌖" }),
+      el("div", { class: "cm-req-detail-empty-title", text: "Select a requirement" }),
+      el("div", { class: "cm-req-detail-empty-sub",
+        text: "Choose a row to read its description, sub-controls and crosswalk references." }),
+    ]));
+  }
 
-  function openDetail(slug) {
-    const detail = REQUIREMENTS_DETAIL[slug];
-    if (!detail) return;
-
+  function selectRequirement(slug) {
+    if (_selectedSlug === slug) {
+      // toggle off when clicking the active row again
+      closeDetail();
+      return;
+    }
+    _selectedSlug = slug;
+    // update row highlight without a full re-render
+    document.querySelectorAll("#cm-requirements .cm-req-tr.selected")
+      .forEach(r => r.classList.remove("selected"));
     const row = document.querySelector(
-      `#cm-requirements .cm-req-row[data-req-slug="${slug}"]`
+      `#cm-requirements .cm-req-tr[data-req-slug="${slug}"]`
     );
-    const expansion = document.querySelector(
-      `#cm-requirements .cm-req-expansion[data-req-slug="${slug}"]`
-    );
-    if (!row || !expansion) return;
+    if (row) row.classList.add("selected");
 
-    if (expansion.classList.contains("open")) {
-      closeDetail(slug);
-      return;
-    }
+    renderDetail(slug, activatedSet());
 
-    renderDetail(slug, detail, expansion);
-    expansion.classList.add("open");
-    row.classList.add("expanded");
-
-    setTimeout(() => {
-      expansion.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }, 60);
+    // On narrow screens the panel is a drawer — open it + backdrop.
+    const panel = document.getElementById("cm-req-detail");
+    const backdrop = document.getElementById("cm-req-detail-backdrop");
+    if (panel) panel.classList.add("open");
+    if (backdrop) backdrop.classList.add("open");
+    if (panel) panel.scrollTop = 0;
   }
 
-  function closeDetail(slug) {
-    if (slug) {
-      const row = document.querySelector(
-        `#cm-requirements .cm-req-row[data-req-slug="${slug}"]`
-      );
-      const expansion = document.querySelector(
-        `#cm-requirements .cm-req-expansion[data-req-slug="${slug}"]`
-      );
-      if (row) row.classList.remove("expanded");
-      if (expansion) expansion.classList.remove("open");
-      return;
-    }
-    // No slug → close all
-    document
-      .querySelectorAll("#cm-requirements .cm-req-expansion.open")
-      .forEach(e => e.classList.remove("open"));
-    document
-      .querySelectorAll("#cm-requirements .cm-req-row.expanded")
-      .forEach(r => r.classList.remove("expanded"));
+  function closeDetail() {
+    _selectedSlug = null;
+    document.querySelectorAll("#cm-requirements .cm-req-tr.selected")
+      .forEach(r => r.classList.remove("selected"));
+    const panel = document.getElementById("cm-req-detail");
+    const backdrop = document.getElementById("cm-req-detail-backdrop");
+    if (backdrop) backdrop.classList.remove("open");
+    renderPlaceholder();
   }
 
-  function renderDetail(slug, detail, container) {
-    if (!container) return;
-    const activated = activatedSet();
+  function renderDetail(slug, activated) {
+    const panel = document.getElementById("cm-req-detail");
+    if (!panel) return;
+    const detail = REQUIREMENTS_DETAIL[slug];
+    if (!detail) { renderPlaceholder(); return; }
+
     const isActive = activated.has(slug);
+    clear(panel);
+    panel.classList.add("open");
+    panel.classList.toggle("has-selection", isActive);
+    panel.classList.toggle("oos", !isActive);
 
-    clear(container);
-    container.classList.toggle("triggered", isActive);
+    const inner = el("div", { class: "cm-req-detail-inner" });
 
-    const inner = el("div", { class: "cm-req-expansion-inner" });
-
-    // header
-    const head = el("div", { class: "cm-mx-head" });
-    head.appendChild(el("span", { class: "cm-detail-id", text: slug }));
-    head.appendChild(el("span", {
-      class: "cm-detail-title",
-      text: REQUIREMENTS[slug] || slug,
-    }));
-    head.appendChild(el("span", {
-      class: "cm-detail-state",
-      text: isActive ? "In scope" : "Out of scope",
-    }));
-    head.appendChild(el("button", {
-      type: "button",
-      class: "cm-mx-close",
-      text: "Collapse ↑",
-      onclick: () => closeDetail(slug),
-    }));
+    // header (reuses matrix detail head conventions)
+    const head = el("div", { class: "cm-mx-head" }, [
+      el("span", { class: "cm-detail-id", text: slug }),
+      el("span", { class: "cm-detail-title", text: REQUIREMENTS[slug] || slug }),
+      el("span", { class: "cm-detail-state", text: isActive ? "In scope" : "Out of scope" }),
+      el("button", {
+        type: "button",
+        class: "cm-mx-close",
+        text: "Close ✕",
+        onclick: () => closeDetail(),
+      }),
+    ]);
     inner.appendChild(head);
 
-    // status pills (mandatory/optional + capabilities + cadence)
+    // status pills: mandatory/optional + capabilities + cadence
     const metaPills = el("div", { class: "cm-detail-pills cm-req-status-pills" });
     metaPills.appendChild(el("span", {
       class: "cm-detail-pill " + (detail.mandatory ? "modality" : ""),
       text: detail.mandatory ? "Mandatory" : "Optional",
+    }));
+    metaPills.appendChild(el("span", {
+      class: "cm-detail-pill",
+      text: "Principle " + principleOf(slug) + " · " + principleName(principleOf(slug)),
     }));
     (detail.capabilities || []).forEach(cap => {
       metaPills.appendChild(el("span", {
@@ -354,12 +537,9 @@
       inner.appendChild(el("p", { class: "cm-detail-intro", text: detail.description }));
     }
 
-    // 2-column body: sub-controls | crosswalk refs (stacks at narrow widths)
-    const grid = el("div", { class: "cm-mx-grid" });
-
+    // sub-controls
     const subs = detail.sub_controls || [];
-    const subsCol = el("div", { class: "cm-req-subs-col" });
-    subsCol.appendChild(el("div", { class: "cm-mx-section-eyebrow",
+    inner.appendChild(el("div", { class: "cm-mx-section-eyebrow",
       text: "Sub-controls (" + subs.length + ")" }));
     const subWrap = el("div", { class: "cm-req-subs" });
     if (subs.length) {
@@ -368,12 +548,11 @@
       subWrap.appendChild(el("div", { class: "cm-detail-empty-cw",
         text: "No sub-controls listed." }));
     }
-    subsCol.appendChild(subWrap);
-    grid.appendChild(subsCol);
+    inner.appendChild(subWrap);
 
-    const cwCol = el("div", { class: "cm-req-cw-col" });
+    // crosswalk refs
     const groups = mappingsForRequirement(slug);
-    cwCol.appendChild(el("div", { class: "cm-mx-section-eyebrow",
+    inner.appendChild(el("div", { class: "cm-mx-section-eyebrow cm-req-cw-eyebrow",
       text: "Crosswalk refs (" + groups.length + ")" }));
     const cwBody = el("div", { class: "cm-req-cw-body" });
     if (!groups.length) {
@@ -382,11 +561,9 @@
     } else {
       groups.forEach(g => cwBody.appendChild(buildCrosswalkGroup(g)));
     }
-    cwCol.appendChild(cwBody);
-    grid.appendChild(cwCol);
+    inner.appendChild(cwBody);
 
-    inner.appendChild(grid);
-    container.appendChild(inner);
+    panel.appendChild(inner);
   }
 
   function buildSubControl(sub) {
@@ -421,16 +598,18 @@
       card.appendChild(el("p", { class: "cm-req-sub-guidance", text: sub.guidance }));
     }
 
+    // should_include: render INLINE and ONLY when present, so its absence
+    // is never a labeled-but-empty section. (Only ~1/127 sub-controls have
+    // this field — treat absence as the normal case.)
     if (Array.isArray(sub.should_include) && sub.should_include.length) {
       const checklist = el("ul", { class: "cm-req-checklist" });
+      checklist.appendChild(el("li", { class: "cm-req-check-lead", text: "Should include" }));
       sub.should_include.forEach(item => {
         checklist.appendChild(el("li", { class: "cm-req-check-item" }, [
           el("span", { class: "cm-req-check-mark", text: "✓" }),
           el("span", { class: "cm-req-check-text", text: item }),
         ]));
       });
-      card.appendChild(el("div", { class: "cm-req-checklist-label",
-        text: "Should include" }));
       card.appendChild(checklist);
     }
 
@@ -481,30 +660,75 @@
     if (!document.getElementById("cm-requirements")) return;
     if (!force && _rendered && !_dirty) return;
     renderControls();
-    renderList();
+    renderTable();
     _rendered = true;
     _dirty = false;
   }
 
+  // ---- cross-tab entry point -----------------------------------------
+  // Called by other tabs (e.g. Coverage) to jump straight to a requirement.
+  // Switches to the Requirements tab, ensures the table is rendered, clears
+  // any filters that would hide the slug, opens its detail and scrolls to it.
+  function openRequirement(slug) {
+    if (!slug || !REQUIREMENTS_DETAIL || !REQUIREMENTS_DETAIL[slug]) return;
+
+    // (a) Switch the results view to the Requirements tab. Mirror what
+    // clicking [data-tab="requirements"] does (06-tabs.js switchTab).
+    if (typeof switchTab === "function") {
+      switchTab("requirements");
+    } else {
+      const tabBtn = document.querySelector('.cm-tab[data-tab="requirements"]');
+      if (tabBtn) tabBtn.click();
+    }
+
+    // (b) Ensure the table is rendered.
+    renderRequirements(true);
+
+    // (c) Clear any active filters / search that would hide this slug, so
+    // the row is guaranteed visible.
+    const activated = activatedSet();
+    const m = buildRowModel(activated).find(r => r.slug === slug);
+    if (m) {
+      if (!rowMatchesFilters(m)) {
+        _filterScope = "all";
+        _filterApp = "all";
+        _filterPrinciple = "all";
+        _filterSeverity = "all";
+        _query = "";
+        renderControls();
+      }
+    }
+
+    // (d) Open the detail and scroll the row into view. Reuse the existing
+    // internals rather than duplicating selection logic.
+    _selectedSlug = null;       // force selectRequirement to treat as new
+    renderTable();              // rebuild with cleared filters + selection reset
+    selectRequirement(slug);
+
+    setTimeout(() => {
+      const row = document.querySelector(
+        `#cm-requirements .cm-req-tr[data-req-slug="${slug}"]`
+      );
+      if (row && typeof row.scrollIntoView === "function") {
+        row.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 0);
+  }
+
   // ---- wiring ---------------------------------------------------------
   function init() {
-    // Lazy + state-aware: re-render every time the requirements tab is
-    // activated. Cheap to do (~50 DOM rows) and avoids needing to hook
-    // submitForm — a stale view is impossible because the user must
-    // click into the tab to see it.
+    // Re-render every time the requirements tab is activated.
     document.addEventListener("click", (e) => {
       const tab = e.target.closest && e.target.closest('[data-tab="requirements"]');
       if (tab) {
-        // Allow switchTab to update visibility first, then render fresh.
         setTimeout(() => renderRequirements(true), 0);
       }
     });
 
-    // Reset flag on form re-submission so list reflects new activations
-    // even if the user lingers on the requirements tab when a re-render
-    // is triggered later. Listen to the submit button + form submit.
+    // Reset flag on form re-submission so the table reflects new activations.
     const markDirty = () => {
       _dirty = true;
+      _selectedSlug = null;
       const reqPane = document.querySelector('.cm-pane[data-pane="requirements"]');
       if (reqPane && reqPane.classList.contains("active")) {
         renderRequirements(true);
@@ -513,11 +737,10 @@
     document.getElementById("cm-submit")?.addEventListener("click", markDirty);
     document.getElementById("cm-form-card")?.addEventListener("submit", markDirty);
 
-    // Esc closes any open expansion(s).
+    // Esc closes the open detail (relevant in narrow-screen drawer mode).
     document.addEventListener("keydown", (e) => {
       if (e.key !== "Escape") return;
-      const anyOpen = document.querySelector("#cm-requirements .cm-req-expansion.open");
-      if (anyOpen) closeDetail();
+      if (_selectedSlug) closeDetail();
     });
 
     // If the page loads with the requirements tab already active, render.
@@ -535,4 +758,5 @@
 
   // expose
   window.renderRequirements = renderRequirements;
+  window.openRequirement = openRequirement;
 })();

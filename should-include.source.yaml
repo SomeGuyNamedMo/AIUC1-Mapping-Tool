@@ -1,0 +1,888 @@
+# should_include content for AIUC-1 sub-controls.
+# Generated from SHOULD-INCLUDE-TRACKER.md.
+#
+# To persist through `ruby scripts/generate-data.rb` regeneration, add each
+# list below as a `should_include:` field on the matching sub_control in
+# cairn/frameworks/aiuc-1/principles/*.yaml (a sibling of its `guidance:` field).
+# Keys are sub_control ids; values are the should_include items verbatim.
+
+# ============================================================
+# Principle A — Data & Privacy
+# ============================================================
+
+# A001 — Establish input data policy
+#   A001.1 · Documentation: Policy for input data ownership, usage and retention
+"A001.1":
+  - "A written policy stating whether customer inputs are used for model training"
+  - "Defined retention periods per data class (e.g., 90 days for prompts, 30 days for metadata)"
+  - "Customer-facing language describing access, portability, and deletion rights"
+  - "Named owner / accountable team for the policy with a review cadence"
+#   A001.2 · Config: Data retention implementation
+"A001.2":
+  - "Automated deletion job or scheduled task configured with retention periods per data class"
+  - "Evidence of a secure deletion mechanism (e.g., crypto-shredding, overwrite verification)"
+  - "Audit log or lifecycle event trail showing data creation, retention, and deletion events"
+  - "Configuration records mapping retention periods to the classes defined in the A001.1 policy"
+#   A001.3 · Documentation: Data subject right processes
+"A001.3":
+  - "Step-by-step workflow for receiving and fulfilling access, portability, and deletion requests"
+  - "Defined SLA or maximum response timeframe for each request type"
+  - "Named role or team responsible for processing requests with an escalation path"
+  - "Record of at least one test or live request processed end-to-end through the workflow"
+
+# A002 — Establish output data policy
+#   A002.1 · Documentation: Output usage and ownership policy
+"A002.1":
+  - "Explicit statement of who owns AI-generated outputs (customer vs. provider) by output type"
+  - "Enumerated permitted and prohibited uses of outputs (commercial use, redistribution, modification)"
+  - "Documented opt-out and deletion procedures for output storage or reuse"
+  - "Defined retention periods for AI outputs and the data handling practices that apply"
+
+# A003 — Limit AI agent data collection
+#   A003.1 · Config: Data collection scoping
+"A003.1":
+  - "Configuration records showing data collection fields are limited to task-relevant scope per context or role"
+  - "Role-based or context-based scoping rules deployed and documented"
+  - "Evidence that persistent or out-of-scope data access is blocked (e.g., network policy, API restrictions)"
+  - "Test or audit result confirming the agent does not collect data beyond the defined scope"
+#   A003.2 · Config: Alerting system for auth failures
+"A003.2":
+  - "Alert rules configured to detect deviations from defined operational scope (e.g., out-of-scope inference calls, excessive data access)"
+  - "Evidence that alerts route to a named responder or channel with a defined response procedure"
+  - "Defined threshold or baseline for what constitutes a deviation triggering an alert"
+  - "Sample alert log or test firing confirming the monitoring is active"
+#   A003.3 · Config: Authorization system integration
+"A003.3":
+  - "Integration configuration linking agent access permissions to an existing IAM or authorization system"
+  - "Documented mapping of agent capabilities to organizational roles or permission groups"
+  - "Test results or access audit confirming permissions propagate correctly from the source system"
+  - "Defined change process for updating agent permissions when organizational policies change"
+
+# A004 — Protect IP & trade secrets
+#   A004.1 · Documentation: User guidance on confidential information
+"A004.1":
+  - "Written guidance listing specific categories of information prohibited from AI input (e.g., trade secrets, source code, client data)"
+  - "Evidence of distribution to relevant staff (e.g., training records, intranet acknowledgment, onboarding checklist)"
+  - "Defined consequences or escalation path for policy violations"
+  - "Named owner and review cadence for keeping the guidance current"
+#   A004.2 · Documentation: foundational model IP protections
+"A004.2":
+  - "Contract or terms-of-service excerpt confirming zero data retention or no-training commitment from the model provider"
+  - "Documented assessment of provider privacy guarantees for each sensitive use case in scope"
+  - "Named providers with their specific IP protection commitments recorded"
+  - "Review record confirming protections were verified before production deployment"
+#   A004.3 · Config: IP detection implementation
+"A004.3":
+  - "Deployed classifier or pattern-matching filter configured to detect proprietary content in outputs"
+  - "Documentation of the proprietary content types and patterns in scope for detection"
+  - "Test results demonstrating detection accuracy against a set of known proprietary samples"
+  - "Defined action (block, flag, log) triggered when proprietary content is detected in an output"
+#   A004.4 · Config: IP disclosure monitoring
+"A004.4":
+  - "Logging configuration capturing AI responses that drew on confidential data sources"
+  - "Evidence that flagged outputs are routed to a human review queue with defined SLA"
+  - "Documented criteria for what triggers a review (e.g., data source classification, confidence score)"
+  - "Records showing at least one flagged output has been reviewed and actioned"
+
+# A005 — Prevent cross-customer data exposure
+#   A005.1 · Documentation: Consent for combined data usage
+"A005.1":
+  - "Customer-facing disclosure explaining when and how their data may be combined with other customer data"
+  - "Documented opt-out mechanism with evidence it is accessible and functional for customers"
+  - "Description of anonymization or abstraction techniques applied before any data combination"
+  - "Consent records or audit trail confirming authorization was obtained before combined processing began"
+#   A005.2 · Config: Customer data isolation controls
+"A005.2":
+  - "Architecture diagram or configuration confirming logical and/or physical separation between customer data stores"
+  - "Tenant-specific encryption configuration with key management documentation"
+  - "Data flow validation results (e.g., automated test, penetration test) confirming no cross-tenant data leakage"
+  - "Evidence that isolation boundaries are enforced in shared infrastructure (e.g., network segmentation, API gateway rules)"
+#   A005.3 · Config: Privacy-enhancing controls
+"A005.3":
+  - "Deployed PET mechanism (e.g., differential privacy, k-anonymity, federated learning) with configuration evidence"
+  - "Documentation of which data processing scenarios each PET applies to and why"
+  - "Test results or quantitative analysis demonstrating the PET's effectiveness at reducing exposure"
+  - "Monitoring evidence confirming PETs are operating as configured in production"
+
+# A006 — Prevent PII leakage
+#   A006.1 · Config: PII detection and filtering
+"A006.1":
+  - "Deployed PII detection covering inputs, outputs, and system logs with defined PII categories in scope"
+  - "Automated redaction configuration applied to logs containing personal identifiers"
+  - "Test results showing detection accuracy including measured false-positive and false-negative rates"
+  - "Defined blocking or redaction action triggered when PII is detected in an output or log entry"
+#   A006.2 · Config: PII access controls
+"A006.2":
+  - "RBAC or ABAC configuration restricting access to PII-containing systems by job function"
+  - "MFA enforcement documented and verified for access to sensitive data systems"
+  - "Approval-gated access workflow configuration for customer information with audit trail"
+  - "Access review records showing periodic validation of PII access assignments"
+#   A006.3 · Config: DLP system integration
+"A006.3":
+  - "Integration configuration linking the AI output pipeline to an existing DLP system"
+  - "DLP policy rules defining personal data patterns and the conditions that constitute a violation"
+  - "Evidence that the DLP system blocks or alerts on AI outputs that violate policy"
+  - "Incident or alert log confirming the integration has been tested or triggered in practice"
+
+# A007 — Prevent IP violations
+#   A007.1 · Documentation: Model provider IP infringement protections
+"A007.1":
+  - "Contract or terms-of-service excerpt documenting provider indemnification commitments for IP infringement claims"
+  - "Description of built-in copyright and trademark guardrails provided by the foundation model"
+  - "Documented scope and known limitations of the provider's IP protections"
+  - "Review record confirming protections were assessed before the model was deployed"
+#   A007.2 · Config: IP infringement filtering
+"A007.2":
+  - "Deployed content filter or classifier configured to detect copyrighted or trademarked material in outputs"
+  - "Documented categories of IP in scope for filtering (e.g., copyrighted text passages, registered trademarks)"
+  - "Test results showing filter performance against a set of known infringing content samples"
+  - "Configured blocking or flagging action applied when potential infringement is detected"
+#   A007.3 · Logs: User-facing notices
+"A007.3":
+  - "Acceptable use policy with explicit prohibitions on requesting IP-infringing outputs, accessible to users"
+  - "In-product warnings or notices shown in IP-sensitive generation contexts"
+  - "Evidence of restrictions configured for known high-risk output domains"
+  - "Log or record of AUP acknowledgments collected from users, or in-product notice delivery events"
+
+# ============================================================
+# Principle B — Security
+# ============================================================
+
+# B001 — Third-party testing of adversarial robustness
+#   B001.1 · Report: adversarial testing results
+"B001.1":
+  - "Third-party or red-team assessment report with adversarial risk coverage mapped to a named framework (e.g., MITRE ATLAS, OWASP LLM Top 10)"
+  - "Evidence of quarterly testing cadence (dated reports or test records across at least two consecutive cycles)"
+  - "Documented findings with severity ratings and tracked remediation actions"
+  - "Access controls applied to test documentation (e.g., restricted distribution, secure storage)"
+#   B001.2 · Documentation: Security program integration
+"B001.2":
+  - "Evidence of AI-specific test cases incorporated into existing penetration testing or security audit scope"
+  - "Shared threat model documentation accessible to both red and blue teams"
+  - "Test schedule showing alignment with security audit and compliance calendar"
+  - "Record of cross-team coordination on AI adversarial testing (e.g., joint findings review, shared tooling)"
+
+# B002 — Detect adversarial input
+#   B002.1 · Config: Adversarial input detection and alerting
+"B002.1":
+  - "Deployed detection rules covering prompt injection patterns, jailbreak techniques, and rate limit breaches"
+  - "Alert configuration routing suspicious activity to named security personnel or a SOC channel"
+  - "Documented confidence thresholds and trigger conditions for each detection rule type"
+  - "Sample alert log or test firing confirming detection is active in production"
+#   B002.2 · Logs: Adversarial incident and response
+"B002.2":
+  - "Centralized log store capturing suspected adversarial inputs with timestamp, context metadata, and severity classification"
+  - "Documented escalation matrix mapping incident severity to designated response personnel"
+  - "Records of at least one incident logged, escalated, and closed with documented response actions"
+  - "Defined retention period for adversarial incident logs"
+#   B002.3 · Documentation: Updates to detection config
+"B002.3":
+  - "Quarterly review records showing detection rules were evaluated and updated"
+  - "Change log documenting rule additions or modifications with rationale tied to emerging adversarial techniques"
+  - "Incident pattern analysis used to inform detection improvements"
+  - "Named owner responsible for the quarterly review process"
+#   B002.4 · Config: Pre-processing adversarial detection
+"B002.4":
+  - "Pre-processing filter or classifier deployed upstream of the foundation model in the request pipeline"
+  - "Documentation of adversarial patterns in scope for pre-processing detection"
+  - "Evidence that flagged inputs are blocked or quarantined before reaching the model"
+  - "Latency and false-positive measurements for the pre-processing layer"
+#   B002.5 · Config: AI security alerts
+"B002.5":
+  - "SIEM integration configuration forwarding AI adversarial alerts in a standard log format (e.g., JSON, syslog)"
+  - "Correlation rules linking AI-flagged inputs to authentication and network log events"
+  - "Evidence that SOC team has visibility into AI security events within their existing tooling"
+  - "Documented runbook or triage procedure for AI security events surfaced in the SIEM"
+
+# B003 — Manage public release of technical details
+#   B003.1 · Documentation: Technical information disclosure guidelines
+"B003.1":
+  - "Written policy listing categories of technical information restricted from public disclosure (e.g., model architecture, training data details, system configs, performance metrics)"
+  - "Defined approval requirement and process before sharing technical specifications externally"
+  - "Guidelines for reviewing public-facing content (blog posts, conference talks, marketing) for inadvertent AI system disclosure"
+  - "Named owner and review cadence for the disclosure policy"
+#   B003.2 · Documentation: Public disclosure approval records
+"B003.2":
+  - "Defined approval workflow specifying required reviewers for AI-related public content"
+  - "Log of approved disclosures with content type, business justification, and approver recorded"
+  - "Evidence that at least one external publication or presentation went through the approval process"
+  - "Defined scope clarifying what constitutes public content referencing AI capabilities"
+
+# B004 — Prevent AI endpoint scraping
+#   B004.1 · Config: Anomalous usage detection
+"B004.1":
+  - "Deployed behavioral analytics or user profiling system with documented detection thresholds per user tier"
+  - "Evidence that thresholds are calibrated to distinguish high-volume legitimate use from adversarial scraping behavior"
+  - "Tuning records showing false-positive rates have been assessed against trusted user baselines"
+  - "Monitoring dashboard or alert log confirming the detection system is active in production"
+#   B004.2 · Config: Rate limits
+"B004.2":
+  - "Rate limiting configuration with per-user or per-API-key quotas documented and enforced at the API layer"
+  - "Progressive restriction or blocking logic configured for users exceeding usage thresholds"
+  - "Evidence that rate limit enforcement is tested (e.g., rejected over-quota request logs)"
+  - "Documented rationale for chosen quota values relative to legitimate usage patterns"
+#   B004.3 · Report: External pentest of AI endpoints
+"B004.3":
+  - "External penetration test report scoped specifically to AI inference endpoints"
+  - "Documented methodology covering high-volume query simulation and distributed attack scenarios"
+  - "Evidence of assessor independence (e.g., third-party firm credentials, statement of independence)"
+  - "Findings with severity ratings, recommendations, and a remediation tracking reference"
+#   B004.4 · Documentation: Vulnerability remediation
+"B004.4":
+  - "Vulnerability tracker or registry showing identified endpoint weaknesses with severity, owner, and status"
+  - "Remediation records with completion dates linked to specific pentest or scan findings"
+  - "Updated endpoint defense configurations reflecting remediation actions taken"
+  - "Evidence that detection thresholds were reviewed and updated based on testing outcomes"
+
+# B005 — Implement real-time input filtering
+#   B005.1 · Config: Input filtering
+"B005.1":
+  - "Deployed input filtering configuration integrating a moderation API or custom rule set upstream of the model"
+  - "Documented confidence thresholds per risk category with justification for chosen values"
+  - "Configured blocking or warning action applied per risk category when inputs are flagged"
+  - "Evidence the filter is active in the production request path (e.g., filtered event log or API config)"
+#   B005.2 · Documentation: Input moderation approach
+"B005.2":
+  - "Written description of chosen moderation tools with rationale for selection over alternatives"
+  - "Documented threshold values per risk category and the decision criteria used to set them"
+  - "Explanation of how each risk category maps to a blocking vs. warning action"
+  - "Review record showing the approach has been evaluated and updated against real-world traffic patterns"
+#   B005.3 · Demonstration: Warning for blocked inputs
+"B005.3":
+  - "Screenshot or recording of the user-facing message displayed when an input is blocked"
+  - "Evidence the message appears consistently across all interaction surfaces (web, API, mobile)"
+  - "Message content that informs the user their input was blocked without revealing filter mechanics"
+#   B005.4 · Logs: Input filtering
+"B005.4":
+  - "Log configuration capturing flagged inputs with timestamp, risk category, confidence score, and action taken"
+  - "Privacy controls applied to logged prompt content (e.g., hashed, truncated, or redacted per retention policy)"
+  - "Defined retention period and access controls for filter logs"
+  - "Evidence that filter logs are reviewed periodically to inform threshold refinement"
+#   B005.5 · Documentation: Input filter performance
+"B005.5":
+  - "Periodic evaluation report covering accuracy, false-positive rate, false-negative rate, and latency for the input filter"
+  - "Threshold adjustment records tied to performance findings with before/after values"
+  - "Defined evaluation cadence and named owner for ongoing filter performance review"
+  - "Baseline or benchmark against which current performance is measured"
+
+# B006 — Prevent unauthorized AI agent actions
+#   B006.1 · Config: Agent service access restrictions
+"B006.1":
+  - "Allowlist or API gateway configuration documenting approved backend services and APIs the agent can access"
+  - "Network segmentation or firewall rules enforcing agent scope at the infrastructure layer"
+  - "Service-level authorization configuration blocking agent requests to systems outside its approved scope"
+  - "Test results confirming the agent cannot reach services outside its authorized allowlist"
+#   B006.2 · Config: Agent security monitoring and alerting
+"B006.2":
+  - "Logging configuration capturing all agent service interactions with timestamp, target service, and action type"
+  - "Alert rules configured to fire on access attempts to unauthorized systems or APIs"
+  - "Anomaly detection baseline and thresholds for flagging unusual agent connection or request patterns"
+  - "Evidence of at least one alert tested or triggered confirming the monitoring is active"
+
+# B007 — Enforce user access privileges to AI systems
+#   B007.1 · Config: User access controls
+"B007.1":
+  - "RBAC or ABAC configuration mapping AI system resources (model config, prompt logs, training data, tool-calling capabilities) to defined job function roles"
+  - "Administrative privilege restrictions documented and enforced, limiting ability to alter system behavior, models, or guardrails"
+  - "Evidence from an access audit confirming controls are applied consistently across all AI system components"
+  - "Documented provisioning and de-provisioning process for AI system access"
+#   B007.2 · Documentation: Access reviews
+"B007.2":
+  - "Quarterly access review records showing user access assignments were validated against current roles"
+  - "Change log documenting access updates with AI-specific justification (e.g., model access rationale, capability boundary changes)"
+  - "Evidence that role or policy changes trigger out-of-cycle access reviews"
+  - "Named owner of the access review process with defined completion criteria"
+
+# B008 — Protect model deployment environment
+#   B008.1 · Config: Model access controls
+"B008.1":
+  - "Access control configuration restricting production model access by job function and operational need"
+  - "MFA enforcement configuration for model system access with verification evidence"
+  - "User access review records for model system access maintained at appropriate cadence"
+  - "Evidence that access is provisioned and revoked through a defined and auditable process"
+#   B008.2 · Config: API deployment security
+"B008.2":
+  - "Scoped API token or signed request configuration with least-privilege scope documented per integration"
+  - "TLS configuration enforced across all model API endpoints with certificate management records"
+  - "Schema validation rules applied to model API inputs with documented allowed schemas"
+  - "Evidence of security controls tested in practice (e.g., logged rejection of malformed or over-privileged requests)"
+#   B008.3 · Config: Model hosting security
+"B008.3":
+  - "Container image configuration using minimal, up-to-date base images with a documented update and patching process"
+  - "Vulnerability scan results for model container dependencies and base images within the defined SLA"
+  - "Infrastructure isolation configuration (e.g., container namespaces, VM separation, dedicated GPU) with justification for the chosen isolation level"
+  - "Evidence that scan findings are reviewed and remediated within a defined timeframe"
+#   B008.4 · Config: Model integrity verification
+"B008.4":
+  - "Cryptographic checksum or signed artifact configuration for model files with a verification step in the deployment pipeline"
+  - "Evidence that model file signatures are verified before each deployment"
+  - "Malicious payload scan configuration applied to model files prior to deployment"
+  - "Record of at least one integrity check performed with a documented pass/fail outcome"
+
+# B009 — Limit output over-exposure
+#   B009.1 · Config: Output volume limits
+"B009.1":
+  - "Configured token or character limits on AI outputs documented per use case or risk level"
+  - "Inference time or token budget caps enforced at the API or application layer"
+  - "Evidence that limits are enforced in production (e.g., truncated response log or gateway config)"
+  - "Documented rationale for chosen limits balancing security against usability requirements"
+#   B009.2 · Demonstration: User output notices
+"B009.2":
+  - "Screenshot or recording of user-facing notice explaining that output has been limited"
+  - "Evidence notice is displayed at the point of truncation or limitation, not only in documentation"
+  - "Notice content that clearly communicates what was limited without revealing exploitable system details"
+#   B009.3 · Config: Output precision controls
+"B009.3":
+  - "Configuration applying output rounding, threshold bands, or obfuscation to identified high-sensitivity output types"
+  - "Documented use cases where precision controls are active and the specific technique applied to each"
+  - "Test results confirming precision controls reduce model inversion risk without degrading utility below acceptable thresholds"
+  - "Monitoring evidence confirming precision controls remain applied in production"
+
+# ============================================================
+# Principle C — Safety
+# ============================================================
+
+# C001 — Define AI risk taxonomy
+#   C001.1 · Documentation: AI risk taxonomy
+"C001.1":
+  - "Categorized risk register covering harmful outputs, out-of-scope outputs, hallucinations, tool call failures, and other application-specific risks"
+  - "Severity grading scale (e.g., critical/high/medium/low) with defined criteria and examples for each level"
+  - "Concrete examples of each risk category drawn from the specific deployment context"
+  - "Alignment mapping showing how internal categories correspond to at least one external framework (e.g., NIST AI RMF, OWASP LLM Top 10)"
+#   C001.2 · Documentation: Risk taxonomy reviews
+"C001.2":
+  - "Quarterly review records showing the taxonomy was assessed and either updated or formally affirmed as current"
+  - "Change log documenting additions or reclassifications with rationale (e.g., emerging threat, incident trigger)"
+  - "Evidence that incidents or monitoring findings have been used to update the taxonomy"
+  - "Named owner responsible for taxonomy maintenance with a defined review cadence"
+
+# C002 — Conduct pre-deployment testing
+#   C002.1 · Documentation: Pre-deployment test and approval records
+"C002.1":
+  - "Completed test plan and results covering risk categories from the risk taxonomy for each deployment"
+  - "Risk assessment of identified issues with severity rating and disposition decision (resolve, accept, defer)"
+  - "Formal sign-off record from the designated accountable approver before deployment"
+  - "Tracking log showing all identified issues were resolved or formally accepted with rationale"
+#   C002.2 · Config: SDLC integration
+"C002.2":
+  - "Documentation showing AI risk evaluation gates embedded at design, staging, and pre-production milestones"
+  - "Threat modelling outputs produced during the design phase for AI system changes"
+  - "Gate sign-off records confirming risk evaluation was completed at each milestone before proceeding"
+  - "Evidence that deployment was blocked or delayed due to a failed gate, or a record confirming all gates were passed"
+#   C002.3 · Documentation: Vulnerability scan results
+"C002.3":
+  - "Scan tool configuration applied to AI model artifacts, dependencies, and deployment packages"
+  - "Scan results report with identified vulnerabilities, severity ratings, and remediation status"
+  - "Evidence that scan results were reviewed and accepted before deployment proceeded"
+  - "Defined policy specifying acceptable vulnerability thresholds for release"
+
+# C003 — Prevent harmful outputs
+#   C003.1 · Config: Harmful output filtering
+"C003.1":
+  - "Deployed classifier or moderation API targeting harmful output categories (distressed content, offensive language, deception, angry tone)"
+  - "Documented definitions for each harmful output type in scope"
+  - "Evidence the filter is applied to outputs before delivery in production"
+  - "Test results showing the filter detects harmful outputs across each defined category"
+#   C003.2 · Config: Guardrails for high-risk advice
+"C003.2":
+  - "Defined list of regulated domains in scope for guardrail enforcement (e.g., medical, legal, financial)"
+  - "Configured restrictions or disclaimer templates applied when outputs touch regulated domains"
+  - "Evidence the guardrail fires correctly in tested scenarios (e.g., disclaimer attached, redirection shown)"
+  - "Redirection or referral mechanism pointing users to qualified professionals where appropriate"
+#   C003.3 · Config: Guardrails for biased outputs
+"C003.3":
+  - "Fairness testing results across defined demographic groups (e.g., gender, race, age) for the system's output types"
+  - "Deployed debiasing or post-processing configuration applied where bias is detected"
+  - "Documented bias categories and demographic groups in scope for testing"
+  - "Review cadence for bias monitoring with a named owner"
+#   C003.4 · Documentation: Filtering performance benchmarks
+"C003.4":
+  - "Evaluation report covering false-positive rate, harmful-output recall, and latency for harm filters"
+  - "Defined performance thresholds or acceptable ranges for each metric"
+  - "Evidence that underperforming controls were adjusted based on benchmark results"
+  - "Benchmark schedule and named owner for ongoing performance evaluation"
+
+# C004 — Prevent out-of-scope outputs
+#   C004.1 · Config: out-of-scope guardrails
+"C004.1":
+  - "Deployed classifier or topic detection configuration with documented prohibited topic categories"
+  - "Refusal response templates configured for each out-of-scope topic category"
+  - "Evidence the guardrail is active in the production request path"
+  - "Test results confirming on-topic requests pass through and off-topic requests are refused"
+#   C004.2 · Logs: Out-of-scope attempts
+"C004.2":
+  - "Log configuration capturing out-of-scope refusals with timestamp, topic category, and session context"
+  - "Periodic review records analyzing refusal trends and false-positive rates"
+  - "Evidence that scope boundary definitions have been updated based on log analysis"
+  - "Defined log retention period and access controls"
+#   C004.3 · Demonstration: User guidance on scope
+"C004.3":
+  - "User-facing documentation or in-product messaging describing what the system can and cannot help with"
+  - "Evidence guidance is surfaced proactively (e.g., onboarding flow, help text, scope statement in UI)"
+  - "Evidence guidance is also shown reactively when an out-of-scope request is refused"
+
+# C005 — Prevent customer-defined high risk outputs
+#   C005.1 · Config: Risk detection and response
+"C005.1":
+  - "Custom classifiers or lexicon/regex filters deployed for each customer-defined high-risk category in the taxonomy"
+  - "Documented mapping of detection rules to specific taxonomy categories"
+  - "Configured response action (block, flag, redirect) for each detected risk category"
+  - "Test results confirming detection and correct response for each taxonomy category"
+#   C005.2 · Documentation: Human review workflows
+"C005.2":
+  - "Documented escalation procedure for flagged high-risk outputs including reviewer assignment and response SLA"
+  - "Named role or team responsible for human review with a defined queue management process"
+  - "Review decision records capturing disposition (approve, reject, escalate) with timestamp"
+  - "Evidence of at least one completed review record showing the workflow is operational"
+#   C005.3 · Config: Automated response mechanisms
+"C005.3":
+  - "Configured automated interventions for each high-risk category (e.g., block, suppress, substitute response)"
+  - "Documented trigger conditions mapping risk scores or categories to automated actions"
+  - "Evidence that automated responses fire correctly in production (e.g., intervention log entry)"
+  - "Review record confirming automated responses are periodically evaluated for continued appropriateness"
+
+# C006 — Prevent output vulnerabilities
+#   C006.1 · Config: Output sanitization
+"C006.1":
+  - "Output encoding and escaping configuration applied for downstream renderers (e.g., HTML, Markdown, JSON)"
+  - "Strip or block rules for unsafe URL patterns and executable or injectable code blocks in outputs"
+  - "Evidence sanitization is applied before output is delivered to the user in production"
+  - "Test results showing unsafe content is correctly stripped or escaped across attack scenarios"
+#   C006.2 · Demonstration: Warning labels for untrusted content
+"C006.2":
+  - "Screenshots or recordings showing warning labels applied to outputs classified as untrusted or unverified"
+  - "Defined criteria for what triggers a warning label (e.g., unverified external source, low-confidence output)"
+  - "Evidence labels are consistently applied across all interaction surfaces"
+  - "Label copy that communicates trust level without being alarmist or confusing to users"
+#   C006.3 · Config: Adversarial output detection
+"C006.3":
+  - "Deployed detection mechanism for output-based attack patterns (e.g., prompt exfiltration, instruction injection embedded in outputs)"
+  - "Documentation of adversarial output patterns in scope for detection"
+  - "Evidence detection is applied to outputs before delivery in production"
+  - "Test results confirming detection of at least one known output-based attack pattern"
+
+# C007 — Flag high risk outputs
+#   C007.1 · Documentation: Definition of high-risk recommendations criteria
+"C007.1":
+  - "Written definition of high-risk output criteria cross-referenced to the risk taxonomy"
+  - "Concrete examples of outputs that would and would not meet each high-risk criterion"
+  - "Version history showing criteria have been updated as the taxonomy evolves"
+  - "Named owner of the criteria with a defined review cadence"
+#   C007.2 · Config: High-risk detection mechanisms
+"C007.2":
+  - "Deployed content filter, risk scorer, or classifier configured to detect outputs meeting high-risk criteria"
+  - "Documented mapping of each detection mechanism to the specific high-risk criterion it covers"
+  - "Evidence the mechanism is applied in the production output path"
+  - "Test results showing the mechanism correctly identifies high-risk outputs and does not flag safe outputs"
+#   C007.3 · Documentation: Human review workflows
+"C007.3":
+  - "Documented review workflow with assigned reviewer roles, response SLA, and escalation path for complex cases"
+  - "Queue management process showing how flagged outputs are tracked through to disposition"
+  - "Review decision records with outcome (approved, rejected, escalated) and timestamp"
+  - "Evidence the workflow is operational (at least one completed review record)"
+
+# C008 — Monitor AI risk categories
+#   C008.1 · Logs: AI risk monitoring
+"C008.1":
+  - "Monitoring configuration sampling AI outputs across risk categories with defined sampling rate and frequency"
+  - "Regular evaluation records prioritized by risk severity (e.g., scheduled review outputs)"
+  - "Aggregate trend data showing system behavior patterns across risk categories over time"
+  - "Named owner for monitoring reviews with a defined cadence"
+#   C008.2 · Documentation: Monitoring findings
+"C008.2":
+  - "Findings reports recording identified risk scenarios with concrete output examples"
+  - "Evidence that monitoring findings have triggered at least one risk taxonomy update"
+  - "Tracking record showing findings are reviewed, assigned, and resolved within a defined timeframe"
+  - "Historical findings log maintained for audit and trend analysis"
+#   C008.4 · Config: Security tooling
+"C008.4":
+  - "Integration configuration forwarding AI risk monitoring alerts to a SIEM or equivalent security platform"
+  - "Standard log format applied to AI risk events (e.g., JSON schema with defined fields)"
+  - "Evidence that security operations can query or receive AI risk alerts within their existing tooling"
+  - "Documented log schema or event specification used for AI risk monitoring outputs"
+
+# C009 — Enable real-time feedback and intervention
+#   C009.1 · Demonstration: User intervention mechanisms
+"C009.1":
+  - "Screenshots or recordings of user-facing controls for pausing, stopping, or redirecting AI system behavior"
+  - "In-product feedback mechanism allowing users to report issues or concerns, with evidence it is reachable"
+  - "Evidence controls are accessible and functional across devices and interaction contexts"
+  - "WCAG 2.1 AA compliance evidence for feedback and intervention UI elements (e.g., contrast ratio, keyboard navigation test)"
+#   C009.2 · Documentation: User feedback & intervention reviews
+"C009.2":
+  - "Documented review process for user feedback and intervention logs with defined cadence"
+  - "Analysis output categorizing feedback by risk domain and prioritizing by frequency and severity"
+  - "Evidence that high-impact or repeat issues have been routed to a product backlog or compliance workflow"
+  - "Named owner of the feedback review process"
+
+# C010 — Third-party testing for harmful outputs
+#   C010.1 · Report: Harmful output testing
+"C010.1":
+  - "Third-party assessor qualifications and independence record (e.g., firm credentials, statement of independence)"
+  - "Testing report covering harmful output categories using a documented methodology (e.g., ToxiGen or equivalent benchmark)"
+  - "Evidence of quarterly testing cadence (dated reports across at least two consecutive cycles)"
+  - "Remediation tracking record showing findings have been addressed with resolution timelines documented"
+
+# C011 — Third-party testing for out-of-scope outputs
+#   C011.1 · Report: Out-of-scope output testing
+"C011.1":
+  - "Third-party assessor qualifications and independence record"
+  - "Testing report covering out-of-scope output categories with documented scope, methodology, and test cases"
+  - "Evidence of quarterly testing cadence"
+  - "Remediation tracking record showing findings have been addressed with resolution timelines documented"
+
+# C012 — Third-party testing for customer-defined risk
+#   C012.1 · Report: Third-party evaluation report assessing customer-defined risk
+"C012.1":
+  - "Third-party assessor qualifications and independence record"
+  - "Testing report covering customer-defined high-risk categories from the risk taxonomy with documented methodology"
+  - "Evidence of quarterly testing cadence"
+  - "Remediation tracking record showing findings have been addressed with resolution timelines documented"
+
+# ============================================================
+# Principle D — Reliability
+# ============================================================
+
+# D001 — Prevent hallucinated outputs
+#   D001.1 · Config: Groundedness filter
+"D001.1":
+  - "Deployed groundedness or fact-checking mechanism configured to flag uncertain or low-confidence responses before delivery"
+  - "Documented confidence threshold below which a response is flagged or withheld"
+  - "Evidence the filter is active in the production output path"
+  - "Test results showing the filter correctly identifies and flags responses with unverifiable or fabricated claims"
+#   D001.2 · Demonstration: User-facing citations & source attributions
+"D001.2":
+  - "Screenshots or recordings showing citations or source attributions displayed alongside factual claims in outputs"
+  - "Evidence that source reliability checks are applied before citations are surfaced to users"
+  - "Defined criteria for what types of claims require a citation"
+  - "Evidence citations are rendered consistently across all interaction surfaces"
+#   D001.3 · Demonstration: User-facing uncertainty labels
+"D001.3":
+  - "Screenshots or recordings showing confidence levels or uncertainty indicators displayed on generated outputs"
+  - "Defined criteria for when an uncertainty label or disclaimer is shown (e.g., below confidence threshold, speculative content)"
+  - "Evidence uncertainty labels are applied consistently and not suppressed in production"
+  - "User-facing copy that communicates uncertainty clearly without undermining trust in reliable outputs"
+
+# D002 — Third-party testing for hallucinations
+#   D002.1 · Report: Hallucination testing results
+"D002.1":
+  - "Third-party assessor qualifications and independence record"
+  - "Testing report covering hallucination categories with documented methodology and benchmark dataset (e.g., TruthfulQA or equivalent)"
+  - "Evidence of quarterly testing cadence (dated reports across at least two consecutive cycles)"
+  - "Remediation tracking record showing findings have been addressed with resolution timelines documented"
+
+# D003 — Restrict unsafe tool calls
+#   D003.1 · Config: Tool authorization & validation
+"D003.1":
+  - "Allowlist of approved functions the AI system is permitted to call, with unauthorized calls blocked"
+  - "Parameter validation rules applied before each tool execution, with out-of-range or malformed inputs rejected"
+  - "Evidence authorization and validation are enforced at the tool invocation layer in production"
+  - "Test results confirming unauthorized function calls are blocked and invalid parameters are rejected"
+#   D003.2 · Config: Rate limits for tools
+"D003.2":
+  - "Configured per-tool and per-session rate limits and transaction caps for autonomous tool use"
+  - "Evidence that rate limits are enforced and breaches are blocked or queued"
+  - "Documented rationale for chosen rate limit values relative to intended use cases"
+  - "Alert or log entry confirming rate limit enforcement has been tested or triggered"
+#   D003.3 · Config: Tool call log
+"D003.3":
+  - "Logging configuration capturing all tool calls with timestamp, function name, parameters, and outcome"
+  - "Monitoring alerts configured to flag unauthorized access attempts or scope violations in tool usage"
+  - "Defined log retention period and access controls for tool call logs"
+  - "Evidence logs are actively reviewed or fed into an anomaly detection process"
+#   D003.4 · Config: Human-approval workflows
+"D003.4":
+  - "Defined list of tool operations classified as high-risk and requiring human confirmation before execution"
+  - "Approval workflow configuration showing how the system pauses and routes high-risk actions to a named approver"
+  - "Evidence the approval workflow fires correctly in tested scenarios (e.g., approval request log)"
+  - "Documented timeout or escalation behavior when an approval is not received within a defined window"
+#   D003.5 · Documentation: tool call log reviews
+"D003.5":
+  - "Periodic review records showing tool call logs were analyzed for anomalies and usage pattern changes"
+  - "Evidence that tool permissions have been updated or tools retired based on review findings"
+  - "Named owner for the review process with a defined cadence"
+  - "Change log recording tool permission updates with rationale"
+
+# D004 — Third-party testing of tool calls
+#   D004.1 · Report: Tool call testing
+"D004.1":
+  - "Third-party assessor qualifications and independence record"
+  - "Testing report covering unauthorized action attempts, restricted information access, and out-of-scope decision scenarios"
+  - "Evidence of quarterly testing cadence"
+  - "Remediation tracking record showing findings have been addressed with resolution timelines documented"
+
+# ============================================================
+# Principle E — Accountability
+# ============================================================
+
+# E001 — AI failure plan for security breaches
+#   E001.1 · Documentation: AI failure plan for security breaches
+"E001.1":
+  - "Named breach response lead with documented authority to engage external counsel and specialists"
+  - "Breach notification procedures covering customer communications, regulatory reporting timelines, and vendor notifications per applicable privacy laws"
+  - "Step-by-step remediation procedure covering system freeze, vulnerability fixes, and access control updates"
+  - "Evidence collection and preservation guidelines for logs, user activity records, and documentation required for legal review"
+
+# E002 — AI failure plan for harmful outputs
+#   E002.1 · Documentation: AI failure plan for harmful outputs
+"E002.1":
+  - "Customer communication protocol with defined disclosure procedure and executive approval requirement for significant incidents"
+  - "Named staff assignments for immediate mitigation steps: system freeze, output suppression, customer notification, and system adjustments"
+  - "Documented escalation path including conditions that trigger each mitigation step"
+  - "Evidence the plan has been reviewed and distributed to named owners"
+#   E002.2 · Documentation: Additional harmful output failure procedures
+"E002.2":
+  - "Taxonomy of harmful output categories with concrete examples (e.g., discriminatory content, offensive material, inappropriate recommendations)"
+  - "External support engagement procedures covering legal counsel consultation, PR support, and insurance claim activation"
+  - "Named contacts or vendors for each external support type with engagement triggers defined"
+  - "Review record confirming the supplemental procedures are integrated with the core E002.1 plan"
+
+# E003 — AI failure plan for hallucinations
+#   E003.1 · Documentation: AI failure plan for hallucinations
+"E003.1":
+  - "Compensation assessment procedure with defined loss evaluation methods and settlement authority levels"
+  - "Named approvers for payment authorization at defined dollar thresholds"
+  - "Remediation steps covering system freeze, model adjustments, output validation improvements, and enhanced monitoring"
+  - "Customer notification template and communication procedure for hallucination-caused financial harm"
+#   E003.2 · Documentation: Additional hallucination failure procedures
+"E003.2":
+  - "Taxonomy of hallucination incident types with distinguishing criteria"
+  - "External support engagement procedures covering legal consultation triggers for significant claims, financial review process, and insurance coverage activation steps"
+  - "Named contacts or vendors for each support category with escalation criteria"
+  - "Review record confirming supplemental procedures are integrated with the core E003.1 plan"
+
+# E004 — Assign accountability
+#   E004.1 · Documentation: Change approval policy and records
+"E004.1":
+  - "Written policy listing AI system changes requiring formal review: model selection, material prompt changes, guardrail additions/removals, end-user workflow changes, and changes exceeding defined performance thresholds"
+  - "Named approver or role assigned to each change category"
+  - "Change record template or log capturing the change description, approver, date, and supporting evidence"
+  - "Sample approval records demonstrating the policy has been applied to at least one change"
+#   E004.2 · Config: Code signing implementation
+"E004.2":
+  - "Code signing configuration applied to AI models, libraries, and deployment artifacts"
+  - "Policy stating that only digitally signed components may be approved for production use"
+  - "Verification process confirming signatures are checked before deployment"
+  - "Evidence of at least one deployment validated through the code signing process"
+
+# E005 — Assess cloud vs on-prem processing
+#   E005.1 · Documentation: Deployment decisions
+"E005.1":
+  - "Documented risk assessment criteria covering data sensitivity, regulatory compliance, IP protection, and security controls for cloud vs. on-premises decisions"
+  - "Decision record for each major deployment choice with business justification and selected criteria scores"
+  - "Review procedure defining conditions that trigger reassessment (e.g., regulatory change, data sensitivity reclassification)"
+  - "Evidence of at least one completed deployment decision documented through the process"
+
+# E006 — Conduct vendor due diligence
+#   E006.1 · Documentation: Vendor due diligence
+"E006.1":
+  - "Assessment criteria framework covering data handling, PII controls, security measures, compliance status, and open-source considerations"
+  - "Completed assessment record for each foundation/upstream model provider including scores, verifications performed (e.g., certifications reviewed, references contacted), and approval decision"
+  - "Audit-ready evidence package for each approved vendor retained before production use"
+  - "Named owner and defined cadence for re-assessment of existing vendors"
+
+# E008 — Review internal processes
+#   E008.1 · Documentation: Internal review
+"E008.1":
+  - "Quarterly review schedule covering AI system changes, model selection decisions, and security assessments"
+  - "Centralized repository of decision records with supporting evidence reviewed during each cycle"
+  - "Remediation tracking log for risks identified during reviews, with assigned owners and resolution timelines"
+  - "Completed review records for at least two consecutive quarterly cycles"
+#   E008.2 · Documentation: External feedback integration
+"E008.2":
+  - "Process for collecting external feedback on AI systems including defined input channels (e.g., customer reports, researcher disclosures, industry alerts)"
+  - "Evidence that external feedback is reviewed and assessed against the internal risk taxonomy"
+  - "Records showing at least one external feedback item processed through the integration procedure"
+  - "Named owner responsible for monitoring and acting on external feedback"
+
+# E009 — Monitor third-party access
+#   E009.1 · Config: Third-party access monitoring
+"E009.1":
+  - "Logging configuration capturing third-party API connections, user access sessions, data exchanges, and service integrations"
+  - "Defined metadata fields captured per access event: user identification, authentication timestamp, accessed resource, session duration, origin IP, and resource usage"
+  - "Evidence that logs are actively retained and accessible for audit or incident review"
+  - "Monitoring or alerting rule configured to flag anomalous third-party access patterns"
+
+# E010 — Establish AI acceptable use policy
+#   E010.1 · Documentation: AI acceptable use policy
+"E010.1":
+  - "Written AUP listing prohibited end-user behaviors including jailbreak attempts, malicious prompt injection, unauthorized data extraction, harmful content generation, and misuse of customer data"
+  - "Evidence of AUP distribution to end-users (e.g., in-product acknowledgment, onboarding checklist, training record)"
+  - "Named owner and defined review cadence for keeping the AUP current"
+  - "Defined consequences or escalation path for AUP violations"
+#   E010.2 · Config: AUP violation detection
+"E010.2":
+  - "Detection and monitoring tools configured to flag jailbreak attempts, prompt injection, output policy violations, and suspicious access patterns"
+  - "Evidence that prompt analysis and output filtering are active in the production path"
+  - "Alert or incident log confirming at least one detection event has fired or been tested"
+  - "Defined response procedure triggered when a violation is detected"
+#   E010.3 · Demonstration: User notification for AUP breaches
+"E010.3":
+  - "Screenshots or recordings showing user-facing alerts or error messages displayed when inputs violate acceptable use policy"
+  - "Evidence that notifications fire consistently across the relevant interaction surfaces"
+  - "Copy of the notification message confirming it clearly communicates the policy violation without exposing system internals"
+  - "Test results confirming notification triggers for defined violation categories"
+#   E010.4 · Documentation: Guardrails enforcing acceptable use
+"E010.4":
+  - "Real-time monitoring, blocking, or alerting configuration with defined trigger conditions"
+  - "Incident tracking log showing AUP violations are recorded with case assignment and resolution documentation"
+  - "Quarterly effectiveness review record covering violation trend analysis, tool performance, policy updates, and training adjustments"
+  - "Named owner for the review process with evidence of at least one completed review cycle"
+
+# E011 — Record processing locations
+#   E011.1 · Documentation: AI processing locations
+"E011.1":
+  - "Documented inventory of AI infrastructure geographic locations including foundation model processing regions and inference endpoint locations"
+  - "Named owner responsible for maintaining and updating the location record"
+  - "Review cadence defined for confirming location data remains accurate after infrastructure changes"
+  - "Evidence the documentation is accessible to compliance and legal teams when needed"
+#   E011.2 · Documentation: Data transfer compliance
+"E011.2":
+  - "Assessment of data transfer requirements for AI training data and inference processing against applicable cross-border transfer regulations"
+  - "Documented transfer mechanisms in use (e.g., SCCs, adequacy decisions, BCRs) with supporting legal basis"
+  - "Named owner responsible for monitoring regulatory changes that affect transfer compliance"
+  - "Review record confirming transfer compliance has been assessed for each active processing location"
+
+# E012 — Document regulatory compliance
+#   E012.1 · Documentation: Regulatory compliance reviews
+"E012.1":
+  - "Inventory of applicable regulations and standards covering data protection laws, sector-specific requirements, and emerging AI standards"
+  - "Documented compliance procedures and strategies for each applicable regulation"
+  - "Evidence of bi-annual review cadence with dated review records"
+  - "Named compliance owner with escalation path for newly identified regulatory requirements"
+
+# E013 — Implement quality management system
+#   E013.1 · Documentation: Quality objectives and risk management
+"E013.1":
+  - "Documented quality objectives with defined performance targets and safety thresholds for AI systems in scope"
+  - "Risk assessment methodology specifying how risks are identified, scored, and prioritized"
+  - "Named owner responsible for quality management with a defined review cadence"
+  - "Evidence that objectives and risk assessments have been applied to at least one AI system"
+#   E013.2 · Documentation: Change management procedures
+"E013.2":
+  - "Documented change management procedure specifying review and approval requirements for AI system changes"
+  - "Change record template capturing: change description, risk assessment, approver, date, and supporting evidence"
+  - "Evidence the procedure has been applied to at least one AI system change"
+  - "Named owner for the change management process with a defined review cadence"
+#   E013.3 · Config: Issue tracking and monitoring
+"E013.3":
+  - "Issue tracking system configured for AI system defects and quality incidents with defined severity classifications"
+  - "Root cause analysis procedure applied to significant defects with documented findings"
+  - "Post-market monitoring configuration capturing performance metrics and anomaly indicators"
+  - "Records showing issues have been tracked, analyzed, and remediated through the system"
+#   E013.4 · Documentation: Data management procedures
+"E013.4":
+  - "Documented data governance procedures covering AI training data, inference inputs, and output data"
+  - "Technical documentation maintained for major AI systems including data sources, preprocessing steps, and data quality standards"
+  - "Named data owner with defined responsibilities for record-keeping and data lifecycle management"
+  - "Evidence that data management procedures are applied consistently across systems in scope"
+#   E013.5 · Documentation: Stakeholder communication procedures
+"E013.5":
+  - "Documented protocols for regulatory reporting covering trigger conditions, required content, and submission timelines"
+  - "Stakeholder notification procedures for AI incidents including defined recipient categories and communication templates"
+  - "Named owner responsible for regulatory and stakeholder communications"
+  - "Evidence that at least one communication (regulatory or stakeholder) has been processed through the documented procedure"
+
+# E015 — Log model activity
+#   E015.1 · Config: Logging implementation
+"E015.1":
+  - "Logging configuration capturing AI system inputs, processing steps, outputs, and associated metadata"
+  - "Defined log fields supporting incident investigation and behavior explanation"
+  - "Evidence that logging is active in the production path across all AI systems in scope"
+  - "Test or audit result confirming logs capture sufficient detail to reconstruct AI system behavior for a given interaction"
+#   E015.2 · Config: Log storage
+"E015.2":
+  - "Log storage configuration with defined retention periods per log type"
+  - "Access controls documented and enforced on log storage systems"
+  - "Data sanitation procedures applied to logs containing PII or sensitive information before storage or sharing"
+  - "Evidence that log storage is sized and monitored to prevent loss due to capacity limits"
+#   E015.3 · Config: Log integrity protection
+"E015.3":
+  - "Technical control deployed to make logs tamper-evident (e.g., append-only storage, cryptographic hashing, write-once configuration)"
+  - "Sequence integrity mechanism ensuring gaps, omissions, or reordering are detectable"
+  - "Evidence that the integrity control is active in the production log pipeline"
+  - "Test or audit result confirming that attempted log modification or deletion is detected or prevented"
+
+# E016 — Implement AI disclosure mechanisms
+#   E016.1 · Demonstration: Text AI disclosure
+"E016.1":
+  - "Screenshots or recordings showing clear AI disclosure notices displayed when users interact with text-based AI systems"
+  - "Evidence the disclosure appears at the start of interactions and is not buried or easily missed"
+  - "Copy of disclosure language confirming it clearly identifies the system as AI-powered"
+  - "Evidence the disclosure is consistent across all text interaction surfaces"
+#   E016.2 · Demonstration: Voice AI disclosure
+"E016.2":
+  - "Recording or transcript showing an audio AI disclosure notification at the beginning of voice calls or voice interactions"
+  - "Evidence the disclosure fires before any substantive AI-driven exchange"
+  - "Copy of disclosure script confirming it clearly identifies the interaction as AI-powered"
+  - "Evidence the voice disclosure is consistent across all voice interaction entry points"
+#   E016.3 · Demonstration: Labelling AI-generated content
+"E016.3":
+  - "Evidence that AI-generated images, videos, audio, and documents are labelled with machine-readable metadata, watermarks, or labels indicating artificial generation"
+  - "Technical specification or configuration of the labelling mechanism applied"
+  - "Test results confirming labels are applied consistently and are detectable by standard inspection tools"
+  - "Named owner responsible for maintaining and updating the labelling implementation"
+#   E016.4 · Demonstration: Automation AI disclosure
+"E016.4":
+  - "Screenshots or recordings showing user notifications when autonomous AI agents or automated workflows are performing actions or making decisions"
+  - "Evidence the disclosure appears before or at the point of autonomous action, not after"
+  - "Copy of notification copy confirming it clearly identifies the action as AI-driven"
+  - "Evidence the disclosure fires consistently across all automated workflow surfaces"
+#   E016.5 · Demonstration: System response to AI inquiry
+"E016.5":
+  - "Screenshots or recordings showing the system clearly acknowledging it is an AI when directly asked by a user"
+  - "Evidence the response fires consistently regardless of how the question is phrased"
+  - "Response copy that confirms AI identity without deception or evasion"
+
+# E017 — Document system transparency policy
+#   E017.1 · Documentation: Transparency policy
+"E017.1":
+  - "Written transparency policy defining which AI systems require documentation and what elements must be included"
+  - "Documentation standards specifying required components (e.g., system description, training data provenance, known limitations, intended use)"
+  - "Named owner and review cadence for the policy"
+  - "Evidence the policy has been applied to at least one AI system meeting the documentation criteria"
+#   E017.2 · Documentation: Model cards and system documentation
+"E017.2":
+  - "Model card or equivalent documentation for each major AI system covering: system characteristics, intended use, data provenance, performance benchmarks, and known limitations"
+  - "Evidence documentation is maintained and kept current as systems evolve"
+  - "Named owner responsible for creating and updating documentation for each system in scope"
+  - "Repository or index confirming all systems meeting the documentation criteria have a current record"
+#   E017.3 · Documentation: Transparency report sharing policy
+"E017.3":
+  - "Policy defining when transparency documentation is shared externally, specifying recipient categories and what information is disclosed to each"
+  - "Approval workflow documentation showing required sign-off before external sharing"
+  - "Version control procedure for shared documents with distribution tracking records"
+  - "Evidence of at least one external sharing event processed through the documented procedure"
+
+# ============================================================
+# Principle F — Society
+# ============================================================
+
+# F001 — Prevent AI cyber misuse
+#   F001.1 · Documentation: Foundation model cyber capabilities
+"F001.1":
+  - "Published or contractually obtained test results from the foundation model developer covering offensive cyber capabilities (e.g., malicious code generation, attack planning, vulnerability exploitation)"
+  - "Documented mitigations implemented by the model developer for each identified cyber capability"
+  - "Named foundation model provider with reference to the specific evaluation report or disclosure"
+  - "Review record confirming the test results were assessed and accepted before or during production deployment"
+#   F001.2 · Config: Cyber use detection
+"F001.2":
+  - "Deployed content filter or classifier configured to detect requests for malicious code generation, attack planning, and vulnerability exploitation guidance"
+  - "Automated blocking configuration applied to detected cyber attack assistance requests"
+  - "Documented database or pattern library of prohibited cyber use cases maintained and updated"
+  - "Test results confirming detection and blocking fires correctly against known malicious request patterns"
+
+# F002 — Prevent catastrophic misuse
+#   F002.1 · Documentation: Foundation model CBRN capabilities
+"F002.1":
+  - "Published or contractually obtained test results from the foundation model developer covering CBRN-related capabilities (chemical, biological, radiological, nuclear)"
+  - "Documented mitigations implemented by the model developer for each identified CBRN capability"
+  - "Named foundation model provider with reference to the specific CBRN evaluation report or safety disclosure"
+  - "Review record confirming CBRN test results were assessed before or during production deployment"
+#   F002.2 · Config: Catastrophic misuse monitoring
+"F002.2":
+  - "Monitoring configuration detecting interaction patterns associated with weapons development or mass harm intent (e.g., CBRN synthesis queries, bioweapon precursor requests)"
+  - "Real-time alerting configured to fire on detected catastrophic misuse attempts with defined escalation path"
+  - "Log or database capturing suspicious queries and system responses for review and evidence retention"
+  - "Evidence that monitoring has been tested and is active in the production interaction path"
+
