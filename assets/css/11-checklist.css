@@ -1,5 +1,12 @@
 /* ==================== checklist tab ==================== */
 
+/* Critical severity pill — strongest tone (--critical defined in 01-base.css). */
+.cm-detail-pill.sev-critical {
+  background: var(--critical-dim); color: var(--critical);
+  border-color: rgba(226, 61, 61, 0.45);
+  font-weight: 600;
+}
+
 .cm-checklist-controls {
   display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
   padding: 12px 16px; margin-bottom: 14px;

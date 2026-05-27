@@ -116,172 +116,42 @@
   display: grid; grid-template-columns: 1fr 1fr;
   gap: 24px;
 }
-.cm-step-grid > .cm-question { padding: 0; border-bottom: none; }
+/* Each question spans two shared row tracks (header / control) via subgrid,
+   so side-by-side questions align their controls even when one has a help
+   line and the other doesn't. */
+.cm-step-grid > .cm-question {
+  padding: 0; border-bottom: none;
+  grid-row: span 2;
+  display: grid;
+  grid-template-rows: subgrid;
+  row-gap: 14px;
+}
 .cm-step-grid > .cm-question.full { grid-column: 1 / -1; }
+.cm-step-grid > .cm-question > .q-top { min-width: 0; }
+.cm-step-grid .q-top .q-head { margin-bottom: 0; }
+.cm-step-grid .q-top .q-help { margin: 6px 0 0; }
 
-/* ========== step 3: no-scroll flex layout ========== */
-#cm-step-3.active {
-  display: flex !important;
-  flex-direction: column;
-  overflow: hidden;
-  padding-bottom: 0;
-}
-/* compact header — hide the long description sub-line */
-#cm-step-3 .cm-step-head {
-  flex-shrink: 0;
-  margin-bottom: 10px;
-}
-#cm-step-3 .cm-step-head .sub { display: none; }
-
-/* map question grows to fill all remaining space */
+/* ========== step 3: jurisdiction ========== */
 #cm-step-3 .cm-question.full {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 0 0 10px;
-  border-bottom: 1px dashed var(--border);
-}
-#cm-step-3 .cm-question.full .q-head {
-  flex-shrink: 0;
-  margin-bottom: 8px;
-}
-#cm-step-3 .cm-map-block {
-  flex: 1;
-  min-height: 0;
-}
-#cm-step-3 .cm-map {
-  min-height: 120px;
-}
-#cm-step-3 .cm-map-checkboxes {
-  align-self: stretch;
-  justify-content: center;
+  padding: 0;
+  border-bottom: none;
 }
 
-/* chips grid — compact, pinned at bottom */
-#cm-step-3 .cm-step-grid {
-  flex-shrink: 0;
+/* region checkboxes (replaces the old world-map picker) */
+.cm-region-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 2px 16px;
+  align-items: start;
+  max-width: 560px;
+  margin-top: 4px;
 }
-#cm-step-3 .cm-step-grid .cm-question {
-  padding: 10px 0 0;
+/* US umbrella + indented state/city sub-jurisdictions */
+.cm-region-subs {
+  display: flex; flex-direction: column;
+  margin-left: 12px; padding-left: 10px;
+  border-left: 1px dashed var(--border);
 }
-#cm-step-3 .cm-step-grid .q-head {
-  margin-bottom: 8px;
-}
-#cm-step-3 .cm-step-grid .q-label {
-  font-size: 18px;
-}
-
-/* ========== world map ========== */
-.cm-map-block {
-  display: flex;
-  flex-direction: row;
-  gap: 18px;
-  align-items: stretch;
-}
-.cm-map {
-  flex: 1;
-  min-width: 0;
-  position: relative;
-  background:
-    radial-gradient(circle, rgba(94, 87, 77, 0.32) 0.6px, transparent 0.6px) 0 0 / 18px 18px,
-    var(--surface-2);
-  background-position: 9px 9px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  overflow: hidden;
-  min-height: 220px;
-}
-.cm-map svg {
-  display: block;
-  width: 100%; height: 100%;
-}
-.cm-map .continent {
-  fill: rgba(232, 226, 214, 0.06);
-  stroke: rgba(148, 139, 125, 0.55);
-  stroke-width: 0.6;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-  pointer-events: none;
-}
-.cm-map .pin-hit {
-  fill: transparent;
-  cursor: pointer;
-}
-.cm-map .pin {
-  pointer-events: none;
-  transition: transform 200ms var(--ease-spring);
-}
-.cm-map .pin .ring {
-  fill: var(--surface-2);
-  stroke: var(--border-bright);
-  stroke-width: 1.5;
-  transition: fill var(--dur-base), stroke var(--dur-base), r var(--dur-base) var(--ease-spring);
-}
-.cm-map .pin .core {
-  fill: var(--text-faint);
-  transition: fill 250ms;
-}
-.cm-map .pin .label {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  fill: var(--text-dim);
-  text-anchor: middle;
-  transition: fill 250ms;
-  pointer-events: none;
-  paint-order: stroke;
-  stroke: var(--surface-2);
-  stroke-width: 3;
-  stroke-linejoin: round;
-}
-.cm-map .pin-group:hover .pin .ring {
-  fill: var(--surface-3);
-  stroke: var(--text-dim);
-}
-.cm-map .pin-group:hover .pin .core { fill: var(--text); }
-.cm-map .pin-group:hover .pin .label { fill: var(--text); }
-.cm-map .pin-group.on .pin {
-  transform-origin: center;
-}
-.cm-map .pin-group.on .pin .ring {
-  fill: var(--coral);
-  stroke: var(--coral);
-}
-.cm-map .pin-group.on .pin .core { fill: var(--bg); }
-.cm-map .pin-group.on .pin .label { fill: var(--coral); font-weight: 600; }
-.cm-map .pin-group.on .pulse {
-  animation: pulseRing 1.6s ease-out 3;
-  transform-origin: center;
-}
-.cm-map .pin-group:focus-visible { outline: none; }
-.cm-map .pin-group:focus-visible .pin .ring { stroke: var(--text); stroke-width: 2.5; }
-@keyframes pulseRing {
-  0%   { r: 11; opacity: 0.6; }
-  100% { r: 28; opacity: 0; }
-}
-
-.cm-map-checkboxes {
-  flex-shrink: 0;
-  width: 210px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-card);
-  padding: 14px 18px;
-  display: flex; flex-direction: column; gap: 4px;
-  align-self: center;
-}
-.cm-map-checkboxes .group-label {
-  font-family: var(--font-mono); font-size: 9px;
-  color: var(--text-faint); text-transform: uppercase;
-  letter-spacing: 0.16em;
-  padding: 8px 0 4px;
-  border-bottom: 1px dashed var(--border);
-  margin-bottom: 4px;
-}
-.cm-map-checkboxes .group-label { margin-top: 0; }
 .cm-checkbox {
   display: flex; align-items: center; gap: 10px;
   padding: 6px 4px; cursor: pointer; user-select: none;
@@ -332,7 +202,7 @@
   flex: 1; min-width: 200px;
 }
 
-/* Enlarge map checkboxes for touch */
+/* Enlarge region checkboxes for touch */
 .cm-checkbox {
   padding: 10px 6px; min-height: 44px;
 }

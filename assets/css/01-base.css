@@ -16,6 +16,8 @@
   --sage-dim:       rgba(139, 168, 122, 0.14);
   --crimson:        #c25450;
   --crimson-dim:    rgba(194, 84, 80, 0.14);
+  --critical:       #e23d3d;
+  --critical-dim:   rgba(226, 61, 61, 0.20);
   --teal:           #5fa8a1;
   --teal-dim:       rgba(95, 168, 161, 0.14);
   --font-display:   'Instrument Serif', 'Times New Roman', Georgia, serif;

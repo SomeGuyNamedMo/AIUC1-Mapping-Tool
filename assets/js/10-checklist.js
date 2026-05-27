@@ -19,6 +19,7 @@
   let _filterStatus = "all";        // "all" | "open" | "done"
   let _filterPrinciple = "all";     // "all" | "A" | "B" | ...
   let _filterApp = "all";           // "all" | "core" | "supplemental"
+  let _filterSeverity = "all";      // "all" | "critical" | "high" | "medium"
   let _query = "";
 
   // checked-state map: { "A001.1": true, ... }
@@ -115,6 +116,7 @@
     if (_filterStatus === "done" && !_checked[r.subId]) return false;
     if (_filterPrinciple !== "all" && r.principle !== _filterPrinciple) return false;
     if (_filterApp !== "all" && r.application !== _filterApp) return false;
+    if (_filterSeverity !== "all" && r.severity !== _filterSeverity) return false;
     if (_query) {
       const hay = (
         r.subId + " " + r.subTitle + " " +
@@ -146,8 +148,9 @@
     ]);
 
     function chip(label, key, group) {
-      const cur = group === "status" ? _filterStatus
-                : group === "app"    ? _filterApp
+      const cur = group === "status"   ? _filterStatus
+                : group === "app"      ? _filterApp
+                : group === "severity" ? _filterSeverity
                 : _filterPrinciple;
       const isActive = cur === key;
       return el("button", {
@@ -156,6 +159,7 @@
         onclick: () => {
           if (group === "status") _filterStatus = key;
           else if (group === "app") _filterApp = key;
+          else if (group === "severity") _filterSeverity = key;
           else _filterPrinciple = key;
           renderControls();
           renderList();
@@ -173,6 +177,13 @@
       chip("Core + Supp.", "all", "app"),
       chip("Core", "core", "app"),
       chip("Supp.", "supplemental", "app"),
+    ]);
+
+    const severityFilter = el("div", { class: "cm-req-filter" }, [
+      chip("All Sev.", "all", "severity"),
+      chip("Critical", "critical", "severity"),
+      chip("High", "high", "severity"),
+      chip("Medium", "medium", "severity"),
     ]);
 
     const principleChips = [chip("All P.", "all", "principle")];
@@ -208,6 +219,7 @@
       search,
       statusFilter,
       appFilter,
+      severityFilter,
       principleFilter,
       exportWrap,
       meta);

@@ -28,6 +28,226 @@ document.addEventListener("keydown", e => {
   }
 });
 
+// ---- centered matrix/requirement modal (shared #cm-mx-modal) ----
+// Module-level so both the framework (matrix) modal and the requirement modal
+// open/close the SAME element interchangeably. close() just toggles classes,
+// identical to the in-renderResults closeModal() so they never conflict.
+function cmCloseMxModal() {
+  const modal = document.getElementById("cm-mx-modal");
+  const back = document.getElementById("cm-mx-modal-backdrop");
+  if (modal) {
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+  }
+  if (back) back.classList.remove("open");
+  document
+    .querySelectorAll(".cm-matrix-row .cell.selected")
+    .forEach(c => c.classList.remove("selected"));
+  document
+    .querySelectorAll(".cm-matrix-row.expanded")
+    .forEach(r => r.classList.remove("expanded"));
+}
+
+// Wire backdrop-click + Escape ONCE at module load (guard against duplicates).
+if (!window.__cmMxModalWired) {
+  window.__cmMxModalWired = true;
+  document.getElementById("cm-mx-modal-backdrop")
+    ?.addEventListener("click", cmCloseMxModal);
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" &&
+        document.getElementById("cm-mx-modal")?.classList.contains("open")) {
+      cmCloseMxModal();
+    }
+  });
+}
+
+// Open the shared centered modal showing a single requirement's full detail.
+// Mirrors the Requirements-tab renderDetail/buildSubControl/buildCrosswalkGroup
+// structure + classes so it looks native, but stays on the Coverage tab.
+function cmOpenRequirementModal(slug) {
+  if (typeof REQUIREMENTS_DETAIL === "undefined" || !REQUIREMENTS_DETAIL) return;
+  const detail = REQUIREMENTS_DETAIL[slug];
+  if (!detail) return;
+
+  const content = document.getElementById("cm-mx-modal-content");
+  if (!content) return;
+
+  const { reasons } = deriveActivations(state);
+  const inScopeSet = new Set(Object.keys(reasons));
+  const isActive = inScopeSet.has(slug);
+
+  const principle = (slug || "").charAt(0);
+  const principleName = (PRINCIPLES.find(p => p.code === principle) || {}).name || principle;
+  const fmt = s => String(s || "").replace(/-/g, " ");
+
+  clear(content);
+
+  // header — id, title, in/out scope state, close btn (same classes as matrix modal)
+  const head = el("div", { class: "cm-mx-head" }, [
+    el("span", { class: "cm-detail-id", text: slug }),
+    el("span", { class: "cm-detail-title", text: REQUIREMENTS[slug] || slug }),
+    el("span", { class: "cm-detail-state", text: isActive ? "In scope" : "Out of scope" }),
+  ]);
+  const closeBtn = el("button", {
+    type: "button",
+    class: "cm-mx-close",
+    "aria-label": "Close",
+    text: "Close ✕",
+  });
+  closeBtn.addEventListener("click", cmCloseMxModal);
+  head.appendChild(closeBtn);
+  content.appendChild(head);
+
+  // status pills: mandatory/optional + principle + capabilities + cadence
+  const pills = el("div", { class: "cm-detail-pills cm-req-status-pills" });
+  pills.appendChild(el("span", {
+    class: "cm-detail-pill " + (detail.mandatory ? "modality" : ""),
+    text: detail.mandatory ? "Mandatory" : "Optional",
+  }));
+  pills.appendChild(el("span", {
+    class: "cm-detail-pill",
+    text: "Principle " + principle + " · " + principleName,
+  }));
+  (detail.capabilities || []).forEach(cap => {
+    pills.appendChild(el("span", {
+      class: "cm-detail-pill" + (cap === "universal" ? " universal" : ""),
+      text: fmt(cap),
+    }));
+  });
+  if (detail.frequency) {
+    pills.appendChild(el("span", {
+      class: "cm-detail-pill",
+      text: "Cadence: " + fmt(detail.frequency),
+    }));
+  }
+  content.appendChild(pills);
+
+  // description
+  if (detail.description) {
+    content.appendChild(el("p", { class: "cm-detail-intro", text: detail.description }));
+  }
+
+  // sub-controls
+  const subs = Array.isArray(detail.sub_controls) ? detail.sub_controls : [];
+  content.appendChild(el("div", { class: "cm-mx-section-eyebrow",
+    text: "Sub-controls (" + subs.length + ")" }));
+  const subWrap = el("div", { class: "cm-req-subs" });
+  if (subs.length) {
+    subs.forEach(sub => {
+      const card = el("div", { class: "cm-req-sub" });
+      card.appendChild(el("div", { class: "cm-req-sub-head" }, [
+        el("span", { class: "cm-req-sub-id", text: sub.id || "" }),
+        el("span", { class: "cm-req-sub-title", text: sub.title || "" }),
+      ]));
+      const subPills = el("div", { class: "cm-req-sub-pills" });
+      if (sub.application) {
+        subPills.appendChild(el("span", {
+          class: "cm-detail-pill app-" + sub.application,
+          text: sub.application,
+        }));
+      }
+      if (sub.severity) {
+        subPills.appendChild(el("span", {
+          class: "cm-detail-pill sev-" + sub.severity,
+          text: "severity: " + sub.severity,
+        }));
+      }
+      subPills.appendChild(el("span", {
+        class: "cm-detail-pill" + (sub.mandatory ? " modality" : ""),
+        text: sub.mandatory ? "Mandatory" : "Optional",
+      }));
+      card.appendChild(subPills);
+      if (sub.guidance) {
+        card.appendChild(el("p", { class: "cm-req-sub-guidance", text: sub.guidance }));
+      }
+      if (Array.isArray(sub.should_include) && sub.should_include.length) {
+        const checklist = el("ul", { class: "cm-req-checklist" });
+        checklist.appendChild(el("li", { class: "cm-req-check-lead", text: "Should include" }));
+        sub.should_include.forEach(item => {
+          checklist.appendChild(el("li", { class: "cm-req-check-item" }, [
+            el("span", { class: "cm-req-check-mark", text: "✓" }),
+            el("span", { class: "cm-req-check-text", text: item }),
+          ]));
+        });
+        card.appendChild(checklist);
+      }
+      subWrap.appendChild(card);
+    });
+  } else {
+    subWrap.appendChild(el("div", { class: "cm-detail-empty-cw",
+      text: "No sub-controls listed." }));
+  }
+  content.appendChild(subWrap);
+
+  // crosswalk refs — grouped by framework, computed from CROSSWALK_DETAILS
+  const groups = [];
+  if (typeof CROSSWALK_DETAILS === "object" && CROSSWALK_DETAILS) {
+    Object.keys(CROSSWALK_DETAILS).forEach(cwSlug => {
+      const cw = CROSSWALK_DETAILS[cwSlug];
+      if (!cw || !Array.isArray(cw.mappings)) return;
+      const matches = cw.mappings.filter(m => m.source === slug);
+      if (!matches.length) return;
+      groups.push({
+        name: cw.target_framework_name || cwSlug,
+        mappings: matches,
+      });
+    });
+    groups.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  content.appendChild(el("div", { class: "cm-mx-section-eyebrow cm-req-cw-eyebrow",
+    text: "Crosswalk refs (" + groups.length + ")" }));
+  const cwBody = el("div", { class: "cm-req-cw-body" });
+  if (!groups.length) {
+    cwBody.appendChild(el("div", { class: "cm-detail-empty-cw",
+      text: "No framework mappings reference this requirement." }));
+  } else {
+    groups.forEach(g => {
+      const wrap = el("div", { class: "cm-req-cw-group" });
+      wrap.appendChild(el("div", { class: "cm-req-cw-group-head" }, [
+        el("span", { class: "cm-req-cw-group-name", text: g.name }),
+        el("span", { class: "cm-req-cw-group-count",
+          text: g.mappings.length + " ref" + (g.mappings.length === 1 ? "" : "s") }),
+      ]));
+      const list = el("div", { class: "cm-detail-cw-list" });
+      g.mappings.forEach(m => {
+        const row = el("div", { class: "cm-detail-cw cm-req-cw" });
+        row.appendChild(el("div", { class: "cm-req-cw-tgt" }, [
+          el("span", { class: "tg", text: String(m.target == null ? "" : m.target) }),
+          m.target_title
+            ? el("span", { class: "cm-req-cw-tgt-title", text: m.target_title })
+            : null,
+        ].filter(Boolean)));
+        row.appendChild(el("div", { class: "cm-req-cw-pills" }, [
+          m.relationship
+            ? el("span", { class: "cm-detail-pill", text: String(m.relationship).replace(/_/g, " ") })
+            : null,
+          m.confidence
+            ? el("span", { class: "cm-detail-pill conf-" + m.confidence, text: m.confidence + " conf" })
+            : null,
+        ].filter(Boolean)));
+        list.appendChild(row);
+        if (m.notes) {
+          list.appendChild(el("div", { class: "cm-req-cw-notes", text: m.notes }));
+        }
+      });
+      wrap.appendChild(list);
+      cwBody.appendChild(wrap);
+    });
+  }
+  content.appendChild(cwBody);
+
+  // open the shared modal
+  const modal = document.getElementById("cm-mx-modal");
+  const back = document.getElementById("cm-mx-modal-backdrop");
+  if (modal) {
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+  }
+  if (back) back.classList.add("open");
+  content.scrollTop = 0;
+}
+
 function renderResults() {
   const { reasons, buckets } = deriveActivations(state);
   const activated = Object.keys(reasons);
@@ -121,6 +341,9 @@ function renderResults() {
       el("div", { class: "tag", text: row.tag }),
     ]));
   });
+
+  // ============= executive summary (risk) =============
+  renderRiskSummary(activatedSet);
 
   // ============= crosswalk matrix =============
   // Compute per-(framework, principle) cell values for the user's scope.
@@ -696,116 +919,240 @@ function renderResults() {
 }
 
 /* ============================================================
-   COVERAGE: frameworks triggered card row
-   Renders a full-width grid of cards under the scorecard, one per
-   recommended framework, with the recommendation rule's description
-   as the human reason. Hidden when nothing is triggered.
+   COVERAGE: executive risk summary
+   Three blocks rendered above the crosswalk matrix:
+     1. Risk snapshot — tally of in-scope sub-controls by severity
+     2. Per-principle risk bars — segmented by severity, worst on top
+     3. Top 5 areas to resolve — highest-risk in-scope requirements
+   Only IN-SCOPE (activated) requirements are counted. Severity has
+   four-ish levels but the data only uses: critical / high / medium.
+   critical is weighted highest everywhere.
    ============================================================ */
-function renderTriggeredSection(recs) {
-  const section = document.getElementById("cm-triggered-section");
-  const grid = document.getElementById("cm-triggered-grid");
-  const meta = document.getElementById("cm-triggered-meta");
-  if (!section || !grid) return;
 
-  if (!recs || !recs.length) {
-    section.classList.add("cm-hidden");
-    return;
-  }
-  section.classList.remove("cm-hidden");
+// Severity weights — critical is the strongest. No "low" in the data.
+const CM_SEVERITY_WEIGHT = { critical: 4, high: 3, medium: 2 };
+// Plain-count weight used by the principle bars / snapshot (visual order).
+const CM_SEVERITY_ORDER = ["critical", "high", "medium"];
+// Shared severity palette — must match the Requirements/Checklist pills
+// (sev-critical/high/medium) so a severity reads as one color across tabs.
+const CM_SEVERITY_COLOR = {
+  critical: "var(--critical)",
+  high: "var(--crimson)",
+  medium: "var(--amber)",
+};
 
-  clear(grid);
-  recs.forEach(rec => {
-    const cw = CROSSWALKS.find(c => c.slug === rec.slug);
-    const fwTitle = (cw && cw.title) || rec.slug;
-    const fwPub = cw ? cw.publisher : "";
-    const fwMeta = (typeof FRAMEWORK_META !== "undefined" && FRAMEWORK_META[rec.slug]) || null;
-    const rule = (typeof RECOMMENDATION_RULES_DETAIL !== "undefined")
-      ? RECOMMENDATION_RULES_DETAIL.find(r => r.recommends && r.recommends.includes(rec.slug))
-      : null;
-    const reason = (rule && rule.description) || rec.why || "Recommended by your scope.";
-
-    const card = el("div", { class: "cm-triggered-card" }, [
-      el("div", { class: "cm-triggered-head" }, [
-        el("span", { class: "cm-triggered-tag", text: "● Trigger" }),
-        fwMeta && fwMeta.geo
-          ? el("span", { class: "cm-triggered-geo", text: fwMeta.geo })
-          : null,
-      ].filter(Boolean)),
-      el("div", { class: "cm-triggered-title", text: fwTitle }),
-      fwPub ? el("div", { class: "cm-triggered-pub", text: fwPub }) : null,
-      el("div", { class: "cm-triggered-reason" }, [
-        el("span", { class: "cm-triggered-reason-eyebrow", text: "Why" }),
-        document.createTextNode(reason),
-      ]),
-    ].filter(Boolean));
-    grid.appendChild(card);
+// Count crosswalk refs (frameworks-side mappings) that reference a requirement.
+function cmRefCount(reqId) {
+  if (typeof CROSSWALK_DETAILS !== "object" || !CROSSWALK_DETAILS) return 0;
+  let n = 0;
+  Object.keys(CROSSWALK_DETAILS).forEach(slug => {
+    const cw = CROSSWALK_DETAILS[slug];
+    if (!cw || !Array.isArray(cw.mappings)) return;
+    n += cw.mappings.filter(m => m.source === reqId).length;
   });
-
-  if (meta) {
-    meta.textContent = recs.length + (recs.length === 1 ? " framework" : " frameworks");
-  }
+  return n;
 }
 
-/* ============================================================
-   COVERAGE: by-principle grid (6 cards)
-   Renders one card per Principle (A-F). Each card shows the code,
-   name, count of activated requirements in that principle, and the
-   hand-written description from 02e-data-content.js.
-   ============================================================ */
-function renderPrincipleGrid(buckets, activatedSet) {
-  const grid = document.getElementById("cm-principle-grid");
-  const meta = document.getElementById("cm-principle-meta");
-  if (!grid) return;
+function renderRiskSummary(activatedSet) {
+  const snapshot = document.getElementById("cm-risk-snapshot");
+  const barsWrap = document.getElementById("cm-risk-bars");
+  const top5 = document.getElementById("cm-top5");
+  const meta = document.getElementById("cm-risk-snapshot-meta");
+  if (!snapshot || !barsWrap || !top5) return;
 
-  // count activated requirements per principle by checking each slug's first letter
-  const perPrinciple = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0 };
-  let total = 0;
-  Object.keys(REQUIREMENTS).forEach(slug => {
-    const code = slug.charAt(0);
-    if (perPrinciple[code] === undefined) return;
-    total++;
-    if (activatedSet.has(slug)) perPrinciple[code]++;
-  });
+  if (typeof REQUIREMENTS_DETAIL === "undefined" || !REQUIREMENTS_DETAIL) return;
 
-  // count totals per principle (denominator)
-  const totalsPerPrinciple = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0 };
-  Object.keys(REQUIREMENTS).forEach(slug => {
-    const code = slug.charAt(0);
-    if (totalsPerPrinciple[code] !== undefined) totalsPerPrinciple[code]++;
-  });
+  clear(snapshot);
+  clear(barsWrap);
+  clear(top5);
 
-  clear(grid);
+  // ---- Walk in-scope requirements, gather per-requirement risk data ----
+  const totalSev = { critical: 0, high: 0, medium: 0 };
+  const perPrinciple = {}; // code -> { sev:{...}, reqCount, weight }
   PRINCIPLES.forEach(p => {
-    const active = perPrinciple[p.code] || 0;
-    const denom = totalsPerPrinciple[p.code] || 0;
-    const pct = denom ? Math.round((active / denom) * 100) : 0;
-    const desc = (typeof PRINCIPLE_DESCRIPTIONS !== "undefined" && PRINCIPLE_DESCRIPTIONS[p.code])
-      || p.description || "";
-
-    const card = el("div", {
-      class: "cm-principle-card" + (active > 0 ? " active" : ""),
-    }, [
-      el("div", { class: "cm-principle-card-head" }, [
-        el("span", { class: "cm-principle-code", text: p.code }),
-        el("span", { class: "cm-principle-name", text: p.name }),
-      ]),
-      el("div", { class: "cm-principle-stat" }, [
-        el("span", { class: "cm-principle-num" + (active === 0 ? " zero" : ""),
-          text: String(active) }),
-        el("span", { class: "cm-principle-of", text: " / " + denom }),
-        el("span", { class: "cm-principle-pct", text: pct + "%" }),
-      ]),
-      el("div", { class: "cm-principle-bar" }, [
-        el("div", { class: "cm-principle-bar-fill",
-          style: { width: pct + "%" } }),
-      ]),
-      el("p", { class: "cm-principle-desc", text: desc }),
-    ]);
-    grid.appendChild(card);
+    perPrinciple[p.code] = { sev: { critical: 0, high: 0, medium: 0 }, reqCount: 0, weight: 0 };
   });
+  const reqRisks = []; // { slug, title, principle, sev, mandatoryHits, score, refs }
+
+  Object.keys(REQUIREMENTS).forEach(slug => {
+    if (!activatedSet.has(slug)) return;
+    const code = slug.charAt(0);
+    const detail = REQUIREMENTS_DETAIL[slug];
+    const subs = (detail && Array.isArray(detail.sub_controls)) ? detail.sub_controls : [];
+    if (!perPrinciple[code]) return;
+    // Suppress universal baseline requirements — the summary highlights
+    // context-specific risk, not the controls every application carries.
+    if (detail && (detail.capabilities || []).includes("universal")) return;
+
+    const sev = { critical: 0, high: 0, medium: 0 };
+    let score = 0;
+    let mandatoryHits = 0;
+    subs.forEach(sc => {
+      const s = sc.severity;
+      if (sev[s] === undefined) return; // ignore unknown severities defensively
+      sev[s]++;
+      let w = CM_SEVERITY_WEIGHT[s];
+      if (sc.mandatory) { w *= 1.5; mandatoryHits++; }
+      score += w;
+      totalSev[s]++;
+      perPrinciple[code].sev[s]++;
+      perPrinciple[code].weight += CM_SEVERITY_WEIGHT[s];
+    });
+    perPrinciple[code].reqCount++;
+
+    reqRisks.push({
+      slug,
+      title: REQUIREMENTS[slug] || slug,
+      principle: code,
+      sev,
+      mandatory: !!(detail && detail.mandatory) || mandatoryHits > 0,
+      score,
+      refs: cmRefCount(slug),
+    });
+  });
+
+  const inScopeCount = reqRisks.length;
+  const totalSubs = totalSev.critical + totalSev.high + totalSev.medium;
+  // Distinguish "nothing submitted" from "only universal baseline in scope".
+  const onlyUniversal = inScopeCount === 0 && activatedSet.size > 0;
 
   if (meta) {
-    const activatedTotal = Object.values(perPrinciple).reduce((a, b) => a + b, 0);
-    meta.textContent = activatedTotal + " of " + total + " requirements in scope";
+    meta.textContent = inScopeCount
+      ? totalSubs + " sub-control" + (totalSubs === 1 ? "" : "s") + " in scope · excludes universal baseline"
+      : (onlyUniversal ? "Universal baseline only" : "Nothing in scope yet");
   }
+
+  // ---- Empty state ----
+  if (!inScopeCount || !totalSubs) {
+    snapshot.appendChild(el("div", { class: "cm-risk-empty",
+      text: onlyUniversal
+        ? "Only universal baseline requirements are in scope — no context-specific risk areas to highlight."
+        : "Nothing in scope yet — submit the assessment to see where your compliance risk concentrates." }));
+    return;
+  }
+
+  // ===== Block 1: Risk snapshot chips =====
+  CM_SEVERITY_ORDER.forEach(s => {
+    const n = totalSev[s];
+    snapshot.appendChild(el("div", {
+      class: "cm-risk-chip cm-risk-chip--" + s + (n === 0 ? " zero" : ""),
+    }, [
+      el("span", { class: "cm-risk-chip-dot" }),
+      el("span", { class: "cm-risk-chip-num", text: String(n) }),
+      el("span", { class: "cm-risk-chip-label", text: s }),
+    ]));
+  });
+
+  // ===== Block 2: Per-principle risk bars (worst on top by total weight) =====
+  const barEyebrow = el("div", { class: "cm-risk-bars-eyebrow", text: "Risk by principle" });
+  barsWrap.appendChild(barEyebrow);
+
+  const principleRows = PRINCIPLES.map(p => ({
+    code: p.code,
+    name: p.name,
+    data: perPrinciple[p.code],
+  }));
+  // Order by total risk weight descending (worst hotspot on top); tie-break by code.
+  principleRows.sort((a, b) => b.data.weight - a.data.weight || a.code.localeCompare(b.code));
+
+  const maxWeight = Math.max(1, ...principleRows.map(r => r.data.weight));
+
+  principleRows.forEach(r => {
+    const d = r.data;
+    const total = d.sev.critical + d.sev.high + d.sev.medium;
+    const row = el("div", { class: "cm-risk-bar-row" + (total === 0 ? " empty" : "") });
+
+    row.appendChild(el("div", { class: "cm-risk-bar-label" }, [
+      el("span", { class: "code", text: r.code }),
+      el("span", { class: "name", text: r.name }),
+    ]));
+
+    // The bar fills proportionally to this principle's weight vs. the max,
+    // and within that fill the segments split by severity count.
+    const track = el("div", { class: "cm-risk-bar-track" });
+    const fill = el("div", { class: "cm-risk-bar-fill",
+      style: { width: ((d.weight / maxWeight) * 100) + "%" } });
+    if (total > 0) {
+      CM_SEVERITY_ORDER.forEach(s => {
+        const c = d.sev[s];
+        if (!c) return;
+        fill.appendChild(el("div", {
+          class: "seg seg--" + s,
+          style: { flex: String(c), background: CM_SEVERITY_COLOR[s] },
+          title: c + " " + s,
+        }));
+      });
+    }
+    track.appendChild(fill);
+    row.appendChild(track);
+
+    row.appendChild(el("div", { class: "cm-risk-bar-count" }, [
+      el("b", { text: String(d.reqCount) }),
+      document.createTextNode(" req" + (d.reqCount === 1 ? "" : "s")),
+    ]));
+    barsWrap.appendChild(row);
+  });
+
+  // legend
+  const legend = el("div", { class: "cm-risk-bar-legend" });
+  CM_SEVERITY_ORDER.forEach(s => {
+    legend.appendChild(el("span", { class: "item" }, [
+      el("span", { class: "sw", style: { background: CM_SEVERITY_COLOR[s] } }),
+      document.createTextNode(s),
+    ]));
+  });
+  barsWrap.appendChild(legend);
+
+  // ===== Block 3: Top 5 areas to resolve =====
+  const ranked = reqRisks.slice().sort((a, b) =>
+    b.score - a.score || b.refs - a.refs || a.slug.localeCompare(b.slug)
+  ).slice(0, 5);
+
+  top5.appendChild(el("div", { class: "cm-top5-eyebrow", text: "Top areas to resolve" }));
+
+  const list = el("ol", { class: "cm-top5-list" });
+  ranked.forEach((r, i) => {
+    const pname = (PRINCIPLES.find(p => p.code === r.principle)?.name) || r.principle;
+
+    // "why" drivers
+    const drivers = [];
+    CM_SEVERITY_ORDER.forEach(s => {
+      if (r.sev[s]) drivers.push(r.sev[s] + " " + s);
+    });
+    const whyParts = [];
+    if (drivers.length) whyParts.push(drivers.join(" + "));
+    if (r.mandatory) whyParts.push("mandatory");
+    if (r.refs) whyParts.push(r.refs + " framework" + (r.refs === 1 ? "" : "s"));
+
+    const item = el("li", {
+      class: "cm-top5-item",
+      role: "button",
+      tabindex: "0",
+      data: { slug: r.slug },
+    }, [
+      el("span", { class: "cm-top5-rank", text: String(i + 1) }),
+      el("div", { class: "cm-top5-body" }, [
+        el("div", { class: "cm-top5-title" }, [
+          el("span", { class: "cm-top5-id", text: r.slug }),
+          el("span", { class: "cm-top5-name", text: r.title }),
+        ]),
+        el("div", { class: "cm-top5-meta" }, [
+          el("span", { class: "cm-top5-principle", text: "Principle " + r.principle + " · " + pname }),
+          whyParts.length
+            ? el("span", { class: "cm-top5-why", text: whyParts.join(" · ") })
+            : null,
+        ].filter(Boolean)),
+      ]),
+      el("span", { class: "cm-top5-arrow", text: "›" }),
+    ]);
+    item.addEventListener("click", () => cmOpenRequirementModal(r.slug));
+    item.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        cmOpenRequirementModal(r.slug);
+      }
+    });
+    list.appendChild(item);
+  });
+  top5.appendChild(list);
 }

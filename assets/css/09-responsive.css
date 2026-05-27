@@ -1,9 +1,11 @@
 /* ========== results tab nav ========== */
 .cm-tabs {
-  position: static; /* no page scroll — no need for sticky */
-  z-index: auto;
+  /* sticky to the top of .cm-results-section scroll so content tucks
+     beneath it; opaque bg so scrolled cards are fully occluded. */
+  position: sticky; top: 0;
+  z-index: 5;
   display: flex; gap: 0;
-  background: rgba(26, 24, 21, 0.97);
+  background: var(--bg);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   /* keep negative margin trick for edge-to-edge look within cm-shell */
@@ -44,16 +46,14 @@
   to   { transform: scaleX(1); }
 }
 
-/* Tab panes: flex: 1 fills remaining height; scroll internally */
+/* Tab panes: the scroll now lives on .cm-results-section, so the active
+   pane is a normal in-flow block that grows with its content. */
 .cm-pane { display: none; }
 .cm-pane.active {
   display: block;
-  flex: 1;
+  flex: 1 0 auto;
   min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+  overflow: visible;
   padding-block: var(--space-5) var(--space-8);
   animation: paneIn 320ms var(--ease-out-expo);
 }
@@ -118,7 +118,6 @@
   .cm-step .lbl .t { font-size: 13px; }
   .cm-step:not(.active) .lbl .t,
   .cm-step:not(.active) .lbl .k { display: none; }
-  .cm-map-checkboxes { max-height: none; }
   .cm-tabs { margin: 0 calc(-1 * var(--space-4)) 0; padding: 0 var(--space-4); }
   .cm-tab { padding: 12px 14px; font-size: 10px; }
   .cm-scorecard { grid-template-columns: 1fr; }
