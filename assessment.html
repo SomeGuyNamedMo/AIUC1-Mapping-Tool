@@ -117,7 +117,12 @@
       </div>
 
       <div class="cm-pane" role="tabpanel" aria-labelledby="tab-requirements" data-pane="requirements">
-        <div class="cm-req-controls" id="cm-req-controls"></div>
+        <!-- one sticky element holding both filter bar and column-header row,
+             so they pin together with no JS height-measurement involved. -->
+        <div class="cm-req-sticky-head">
+          <div class="cm-req-controls" id="cm-req-controls"></div>
+          <div class="cm-req-thead-slot" id="cm-req-thead-slot"></div>
+        </div>
         <div class="cm-req-list" id="cm-requirements"></div>
       </div>
 

@@ -7,12 +7,14 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  /* single scroll container: content tucks under the sticky tab bar */
+  /* single scroll container: content tucks under the sticky tab bar.
+     no top padding — the sticky tab bar must sit flush with the scrollport
+     top, else content scrolls through the padding gap above it. */
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  padding-block: var(--space-4) 0;
+  padding-block: 0;
 }
 .cm-result-eyebrow {
   font-family: var(--font-mono); font-size: 11px;
@@ -41,6 +43,9 @@
 
 .cm-results-header {
   flex-shrink: 0;
+  /* breathing room that previously came from the section's top padding;
+     lives here so it scrolls away with the header, not above the tab bar. */
+  padding-top: var(--space-4);
   margin-bottom: 8px;
 }
 .cm-section { margin-top: 36px; }

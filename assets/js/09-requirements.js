@@ -2,14 +2,15 @@
 
 /* ============================================================
    REQUIREMENTS TAB
-   A clean, report-style master-detail view:
-   - left: a sortable / searchable / filterable TABLE of the 49
-     requirements (one row each — no unbounded accordions).
-   - right: a single persistent detail panel showing the selected
-     requirement's description, status, sub-controls and crosswalk
-     refs. Only one requirement is ever expanded at a time.
-   On narrow screens the detail panel collapses into a slide-in
-   drawer so the table stays fully usable.
+   A clean, report-style single-column view:
+   - A sortable / searchable / filterable TABLE of the 49
+     requirements (one row each).
+   - Clicking a row expands it inline: a detail block is inserted
+     directly beneath the row showing its description, status,
+     sub-controls and crosswalk refs. Only one row is expanded at
+     a time; clicking it again (or the close button) collapses it.
+   - Both the filter card and the column-header row pin together
+     via a single sticky wrapper.
    ============================================================ */
 
 (function () {
@@ -18,8 +19,9 @@
   let _dirty = true;
   let _filterScope = "all";     // "all" | "in-scope" | "out-of-scope"
   let _filterApp = "all";       // "all" | "core" | "supplemental"
-  let _filterPrinciple = "all"; // "all" | "A" | "B" | ...
-  let _filterSeverity = "all";  // "all" | "critical" | "high" | "medium" | "low"
+  // multi-select: empty Set means "All" (no constraint); otherwise OR-match.
+  const _filterPrinciples = new Set(); // "A" | "B" | ...
+  const _filterSeverities = new Set();  // "critical" | "high" | "medium" | "low"
   let _query = "";
   let _selectedSlug = null;
   let _sortKey = "id";        // id | principle | scope | type | severity | subs | refs
@@ -119,26 +121,35 @@
       }),
     ]);
 
-    function currentFor(group) {
+    // scope/app are single-select presets; principle/severity are
+    // multi-select sets where the "all" chip clears the set.
+    function isChipActive(group, key) {
       switch (group) {
-        case "scope":     return _filterScope;
-        case "app":       return _filterApp;
-        case "principle": return _filterPrinciple;
-        case "severity":  return _filterSeverity;
-        default:          return "all";
+        case "scope":     return _filterScope === key;
+        case "app":       return _filterApp === key;
+        case "principle": return key === "all" ? _filterPrinciples.size === 0 : _filterPrinciples.has(key);
+        case "severity":  return key === "all" ? _filterSeverities.size === 0 : _filterSeverities.has(key);
+        default:          return false;
       }
     }
 
+    function toggleInSet(set, key) {
+      if (key === "all") set.clear();
+      else if (set.has(key)) set.delete(key);
+      else set.add(key);
+    }
+
     function chip(label, key, group) {
-      const isActive = currentFor(group) === key;
+      const isActive = isChipActive(group, key);
       return el("button", {
         type: "button",
         class: "cm-req-chip" + (isActive ? " active" : ""),
+        "aria-pressed": isActive ? "true" : "false",
         onclick: () => {
           if (group === "scope") _filterScope = key;
           else if (group === "app") _filterApp = key;
-          else if (group === "principle") _filterPrinciple = key;
-          else if (group === "severity") _filterSeverity = key;
+          else if (group === "principle") toggleInSet(_filterPrinciples, key);
+          else if (group === "severity") toggleInSet(_filterSeverities, key);
           renderControls();
           renderTable();
         },
@@ -204,9 +215,9 @@
       const apps = (m.detail.sub_controls || []).map(s => s.application);
       if (!apps.includes(_filterApp)) return false;
     }
-    if (_filterPrinciple !== "all" && m.principle !== _filterPrinciple) return false;
+    if (_filterPrinciples.size && !_filterPrinciples.has(m.principle)) return false;
     // Filter on the exact rolled-up value the Severity column displays.
-    if (_filterSeverity !== "all" && m.severity !== _filterSeverity) return false;
+    if (_filterSeverities.size && !_filterSeverities.has(m.severity)) return false;
     if (_query) {
       const hay = (
         m.slug + " " +
@@ -387,13 +398,20 @@
         : (visible + " / " + total + " requirements");
     }
 
-    // Layout: a 2-col master-detail. The table is one column; the detail
-    // panel is the other (and becomes a drawer on narrow screens via CSS).
-    const layout = el("div", { class: "cm-req-layout" });
+    // Column-header row lives in the sticky head (above the layout) so it
+    // pins with the filter card. Its sub-grid template matches the rows
+    // below, so columns align without any pixel measurement.
+    const theadSlot = document.getElementById("cm-req-thead-slot");
+    if (theadSlot) {
+      clear(theadSlot);
+      theadSlot.appendChild(buildHeader());
+    }
 
+    // Single-column body. Clicking a row inserts the detail inline as a
+    // block sibling immediately after it (handled in selectRequirement).
+    const layout = el("div", { class: "cm-req-layout" });
     const tableWrap = el("div", { class: "cm-req-table-wrap" });
     const table = el("div", { class: "cm-req-table", role: "table" });
-    table.appendChild(buildHeader());
 
     const body = el("div", { class: "cm-req-tbody", role: "rowgroup" });
     if (visible === 0) {
@@ -407,89 +425,59 @@
     tableWrap.appendChild(table);
     layout.appendChild(tableWrap);
 
-    // detail panel container (filled by renderDetail)
-    const panel = el("div", { class: "cm-req-detail", id: "cm-req-detail" });
-    layout.appendChild(panel);
-
-    // backdrop for the narrow-screen drawer mode
-    const backdrop = el("div", {
-      class: "cm-req-detail-backdrop",
-      id: "cm-req-detail-backdrop",
-      onclick: () => closeDetail(),
-    });
-    layout.appendChild(backdrop);
-
     root.appendChild(layout);
 
-    // Re-render detail for the still-selected slug (if it survived filtering),
-    // otherwise show the placeholder.
+    // If the previously selected requirement is still in the filtered view,
+    // re-expand it inline; otherwise drop selection silently.
     if (_selectedSlug && rows.some(r => r.slug === _selectedSlug)) {
-      renderDetail(_selectedSlug, activated);
+      openInlineDetail(_selectedSlug, activated);
     } else {
       _selectedSlug = null;
-      renderPlaceholder();
     }
   }
 
-  // ---- detail panel ---------------------------------------------------
-  function renderPlaceholder() {
-    const panel = document.getElementById("cm-req-detail");
-    if (!panel) return;
-    panel.classList.remove("open", "has-selection", "oos");
-    clear(panel);
-    panel.appendChild(el("div", { class: "cm-req-detail-empty" }, [
-      el("div", { class: "cm-req-detail-empty-mark", text: "⌖" }),
-      el("div", { class: "cm-req-detail-empty-title", text: "Select a requirement" }),
-      el("div", { class: "cm-req-detail-empty-sub",
-        text: "Choose a row to read its description, sub-controls and crosswalk references." }),
-    ]));
+  // ---- inline detail (row expansion) ----------------------------------
+  function collapseDetail() {
+    _selectedSlug = null;
+    document.querySelectorAll("#cm-requirements .cm-req-tr.selected")
+      .forEach(r => r.classList.remove("selected"));
+    const existing = document.getElementById("cm-req-detail");
+    if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+  }
+
+  function openInlineDetail(slug, activated) {
+    collapseDetail();
+    const row = document.querySelector(
+      `#cm-requirements .cm-req-tr[data-req-slug="${slug}"]`
+    );
+    if (!row) return;
+    _selectedSlug = slug;
+    row.classList.add("selected");
+    const panel = el("div", { class: "cm-req-detail", id: "cm-req-detail" });
+    row.parentNode.insertBefore(panel, row.nextSibling);
+    renderDetail(slug, activated || activatedSet());
   }
 
   function selectRequirement(slug) {
     if (_selectedSlug === slug) {
       // toggle off when clicking the active row again
-      closeDetail();
+      collapseDetail();
       return;
     }
-    _selectedSlug = slug;
-    // update row highlight without a full re-render
-    document.querySelectorAll("#cm-requirements .cm-req-tr.selected")
-      .forEach(r => r.classList.remove("selected"));
-    const row = document.querySelector(
-      `#cm-requirements .cm-req-tr[data-req-slug="${slug}"]`
-    );
-    if (row) row.classList.add("selected");
-
-    renderDetail(slug, activatedSet());
-
-    // On narrow screens the panel is a drawer — open it + backdrop.
-    const panel = document.getElementById("cm-req-detail");
-    const backdrop = document.getElementById("cm-req-detail-backdrop");
-    if (panel) panel.classList.add("open");
-    if (backdrop) backdrop.classList.add("open");
-    if (panel) panel.scrollTop = 0;
+    openInlineDetail(slug);
   }
 
-  function closeDetail() {
-    _selectedSlug = null;
-    document.querySelectorAll("#cm-requirements .cm-req-tr.selected")
-      .forEach(r => r.classList.remove("selected"));
-    const panel = document.getElementById("cm-req-detail");
-    const backdrop = document.getElementById("cm-req-detail-backdrop");
-    if (backdrop) backdrop.classList.remove("open");
-    renderPlaceholder();
-  }
+  function closeDetail() { collapseDetail(); }
 
   function renderDetail(slug, activated) {
     const panel = document.getElementById("cm-req-detail");
     if (!panel) return;
     const detail = REQUIREMENTS_DETAIL[slug];
-    if (!detail) { renderPlaceholder(); return; }
+    if (!detail) { collapseDetail(); return; }
 
     const isActive = activated.has(slug);
     clear(panel);
-    panel.classList.add("open");
-    panel.classList.toggle("has-selection", isActive);
+    // out-of-scope rows get a dashed left rail (vs. the solid coral default).
     panel.classList.toggle("oos", !isActive);
 
     const inner = el("div", { class: "cm-req-detail-inner" });
@@ -550,10 +538,14 @@
     }
     inner.appendChild(subWrap);
 
-    // crosswalk refs
+    // Crosswalk refs — collapsed by default to keep the row expansion compact.
+    // Native <details> handles toggle + keyboard + a11y for free; no JS state.
     const groups = mappingsForRequirement(slug);
-    inner.appendChild(el("div", { class: "cm-mx-section-eyebrow cm-req-cw-eyebrow",
-      text: "Crosswalk refs (" + groups.length + ")" }));
+    const cwDetails = el("details", { class: "cm-req-cw-details" });
+    cwDetails.appendChild(el("summary", {
+      class: "cm-mx-section-eyebrow cm-req-cw-summary",
+      text: "Crosswalk refs (" + groups.length + ")",
+    }));
     const cwBody = el("div", { class: "cm-req-cw-body" });
     if (!groups.length) {
       cwBody.appendChild(el("div", { class: "cm-detail-empty-cw",
@@ -561,7 +553,8 @@
     } else {
       groups.forEach(g => cwBody.appendChild(buildCrosswalkGroup(g)));
     }
-    inner.appendChild(cwBody);
+    cwDetails.appendChild(cwBody);
+    inner.appendChild(cwDetails);
 
     panel.appendChild(inner);
   }
@@ -687,7 +680,7 @@
     document.getElementById("cm-submit")?.addEventListener("click", markDirty);
     document.getElementById("cm-form-card")?.addEventListener("submit", markDirty);
 
-    // Esc closes the open detail (relevant in narrow-screen drawer mode).
+    // Esc collapses the currently-expanded inline detail.
     document.addEventListener("keydown", (e) => {
       if (e.key !== "Escape") return;
       if (_selectedSlug) closeDetail();
